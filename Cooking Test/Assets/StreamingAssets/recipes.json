@@ -1,0 +1,22 @@
+{
+  "recipes": [
+    {
+      "recipeName": "Mushroom Soup",
+      "energyCost": 5,
+      "ingredients": [
+        { "id": "mushroom", "amount": 2 },
+        { "id": "water", "amount": 1 }
+      ],
+      "resultId": "mushroom_soup"
+    },
+    {
+      "recipeName": "Grilled Meat",
+      "energyCost": 10,
+      "ingredients": [
+        { "id": "meat", "amount": 1 },
+        { "id": "salt", "amount": 1 }
+      ],
+      "resultId": "grilled_meat"
+    }
+  ]
+}

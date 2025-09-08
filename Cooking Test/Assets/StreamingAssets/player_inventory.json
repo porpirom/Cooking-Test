@@ -1,0 +1,16 @@
+{
+    "items": [
+        {
+            "id": "mushroom",
+            "amount": 9
+        },
+        {
+            "id": "water",
+            "amount": 1
+        },
+        {
+            "id": "meat",
+            "amount": 2
+        }
+    ]
+}
