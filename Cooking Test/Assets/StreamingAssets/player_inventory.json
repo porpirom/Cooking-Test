@@ -2,10 +2,10 @@
     "items": [
         {
             "id": "mushroom",
-            "amount": 9
+            "amount": 7
         },
         {
-            "id": "water",
+            "id": "mushroom_soup",
             "amount": 1
         },
         {

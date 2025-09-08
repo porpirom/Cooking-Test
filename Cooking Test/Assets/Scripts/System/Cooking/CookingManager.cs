@@ -5,15 +5,15 @@ public class CookingManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private EnergySystem energySystem;
     [SerializeField] private Inventory inventory;
-
-    [Header("Recipes")]
     [SerializeField] private RecipeLoader recipeLoader;
 
     [Header("Test Cooking (Inspector)")]
-    [Tooltip("Choose recipe to cook when pressing Play")]
-    [SerializeField] private int recipeIndex = 0; // เลือก recipe ผ่าน Inspector
+    [Tooltip("Choose recipe to cook")]
+    [SerializeField] private int recipeIndex = 0;
 
-    private void Start()
+    // Inspector Button: กดเพื่อปรุงอาหาร
+    [ContextMenu("Cook Selected Recipe")]
+    public void CookSelectedRecipe()
     {
         if (recipeLoader == null || recipeLoader.recipeCollection == null || recipeLoader.recipeCollection.recipes.Length == 0)
         {
@@ -21,10 +21,9 @@ public class CookingManager : MonoBehaviour
             return;
         }
 
-        // Limit index to available recipes
+        // Clamp index
         recipeIndex = Mathf.Clamp(recipeIndex, 0, recipeLoader.recipeCollection.recipes.Length - 1);
 
-        // Start cooking test
         CookRecipe(recipeLoader.recipeCollection.recipes[recipeIndex]);
     }
 
@@ -56,8 +55,13 @@ public class CookingManager : MonoBehaviour
         foreach (var ingredient in recipe.ingredients)
             inventory.RemoveItem(ingredient.id, ingredient.amount);
 
-        // Cooking success
+        // Add result item
         inventory.AddItem(recipe.resultId, 1);
+
+        // Save inventory after cooking
+        string inventoryPath = System.IO.Path.Combine(Application.streamingAssetsPath, "player_inventory.json");
+        inventory.SaveToJson(inventoryPath);
+
         Debug.Log($"[CookingManager] Successfully cooked {recipe.recipeName}!");
     }
 }
