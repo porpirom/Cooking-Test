@@ -16,8 +16,8 @@ public class InventoryTest : MonoBehaviour
         inventory.LoadFromJson(path);
 
         // Test add/remove
-        inventory.AddItem("mushroom", 2);
-        inventory.AddItem("water", 2);
+        //inventory.AddItem("mushroom", 2);
+        //inventory.AddItem("water", 2);
 
         //inventory.RemoveItem("water", 1);
 

@@ -7,7 +7,8 @@
         { "id": "mushroom", "amount": 2 },
         { "id": "water", "amount": 1 }
       ],
-      "resultId": "mushroom_soup"
+      "resultId": "mushroom_soup",
+      "cookingTimeSeconds": 15
     },
     {
       "recipeName": "Grilled Meat",
@@ -16,7 +17,8 @@
         { "id": "meat", "amount": 1 },
         { "id": "salt", "amount": 1 }
       ],
-      "resultId": "grilled_meat"
+      "resultId": "grilled_meat",
+      "cookingTimeSeconds": 60
     }
   ]
 }

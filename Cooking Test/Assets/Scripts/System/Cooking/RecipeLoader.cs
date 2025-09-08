@@ -1,10 +1,13 @@
 using UnityEngine;
 using System.IO;
+using System;
 
 public class RecipeLoader : MonoBehaviour
 {
     [SerializeField] private string jsonFileName = "recipes.json";
     public RecipeCollection recipeCollection;
+
+    public event Action OnRecipesLoaded;
 
     private void Start()
     {
@@ -19,12 +22,9 @@ public class RecipeLoader : MonoBehaviour
         {
             string json = File.ReadAllText(path);
             recipeCollection = JsonUtility.FromJson<RecipeCollection>(json);
-
             Debug.Log($"[RecipeLoader] Loaded {recipeCollection.recipes.Length} recipes");
-            foreach (var recipe in recipeCollection.recipes)
-            {
-                Debug.Log($"- {recipe.recipeName} needs {recipe.energyCost} energy, result: {recipe.resultId}");
-            }
+
+            OnRecipesLoaded?.Invoke();
         }
         else
         {
