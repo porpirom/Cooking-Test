@@ -34,6 +34,8 @@ public class CookingManager : MonoBehaviour
     public event Action<RecipeData> OnCookingFinished;
 
     public bool IsCooking => isCooking && !isPaused;
+    public RecipeLoader RecipeLoader => recipeLoader;
+
 
     public int RemainingTime
     {
@@ -107,10 +109,15 @@ public class CookingManager : MonoBehaviour
         StartCooking(currentRecipe);
     }
 
-    private void StartCooking(RecipeData recipe)
+    public void StartCooking(RecipeData recipe)
     {
-        if (!energySystem.HasEnergy(recipe.energyCost)) return;
-        foreach (var ing in recipe.ingredients) if (!inventory.HasItem(ing.id, ing.amount)) return;
+        Debug.Log($"[CookingManager] StartCooking called for {recipe.recipeName}");
+        if (!energySystem.HasEnergy(recipe.energyCost)) Debug.Log("[CookingManager] Not enough energy");
+        foreach (var ing in recipe.ingredients)
+            if (!inventory.HasItem(ing.id, ing.amount)) Debug.Log($"[CookingManager] Missing ingredient {ing.id}");
+
+        /*if (!energySystem.HasEnergy(recipe.energyCost)) return;
+        foreach (var ing in recipe.ingredients) if (!inventory.HasItem(ing.id, ing.amount)) return;*/
 
         energySystem.UseEnergy(recipe.energyCost);
         foreach (var ing in recipe.ingredients) inventory.RemoveItem(ing.id, ing.amount);
