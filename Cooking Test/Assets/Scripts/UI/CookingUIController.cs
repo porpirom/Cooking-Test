@@ -26,9 +26,13 @@ public class CookingUIController : MonoBehaviour
     [Header("Star Filter")]
     [SerializeField] private TMP_Dropdown starDropdown;
 
+    [Header("Search")]
+    [SerializeField] private TMP_InputField searchInput;
+
     private RecipeData selectedRecipe;
     private int selectedStarFilter = 0; // 0 = ALL
-    private int maxStar = 3; // default, will be updated dynamically
+    private int maxStar = 3; // will be determined dynamically
+    private string searchQuery = "";
 
     private void OnEnable()
     {
@@ -64,9 +68,13 @@ public class CookingUIController : MonoBehaviour
         if (pauseButton != null) pauseButton.onClick.AddListener(OnPauseButton);
         if (resumeButton != null) resumeButton.onClick.AddListener(OnResumeButton);
 
-        // Setup dropdown event
+        // Setup star dropdown
         if (starDropdown != null)
             starDropdown.onValueChanged.AddListener(OnStarFilterChanged);
+
+        // Setup search input
+        if (searchInput != null)
+            searchInput.onValueChanged.AddListener(OnSearchValueChanged);
 
         // If recipes already loaded, populate immediately
         if (cookingManager.RecipeLoader.recipeCollection != null &&
@@ -75,7 +83,6 @@ public class CookingUIController : MonoBehaviour
             OnRecipesLoaded();
         }
 
-        // Update initial UI
         UpdateButtonState(cookingManager.isCooking);
         UpdateTimerText(cookingManager.RemainingTime);
     }
@@ -93,8 +100,6 @@ public class CookingUIController : MonoBehaviour
         }
 
         SetupStarDropdown();
-
-        // Populate recipe buttons
         PopulateRecipesUI();
     }
 
@@ -104,7 +109,6 @@ public class CookingUIController : MonoBehaviour
 
         List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
         options.Add(new TMP_Dropdown.OptionData("ALL")); // index 0 = ALL
-
         for (int i = maxStar; i >= 1; i--)
         {
             options.Add(new TMP_Dropdown.OptionData(i + " STAR"));
@@ -117,7 +121,6 @@ public class CookingUIController : MonoBehaviour
 
     private void PopulateRecipesUI()
     {
-        // Clear existing UI
         foreach (Transform child in recipeListContainer)
             Destroy(child.gameObject);
 
@@ -131,10 +134,6 @@ public class CookingUIController : MonoBehaviour
                 view.SetData(recipe);
                 view.OnRecipeSelected += OnSelectRecipe;
             }
-            else
-            {
-                Debug.LogWarning("[CookingUI] recipeButtonPrefab missing RecipeView component!");
-            }
         }
 
         UpdateRecipeUIVisibility();
@@ -143,13 +142,16 @@ public class CookingUIController : MonoBehaviour
     private void OnStarFilterChanged(int index)
     {
         if (index == 0)
-        {
             selectedStarFilter = 0; // ALL
-        }
         else
-        {
             selectedStarFilter = maxStar - (index - 1);
-        }
+
+        UpdateRecipeUIVisibility();
+    }
+
+    private void OnSearchValueChanged(string query)
+    {
+        searchQuery = query.Trim().ToLower();
         UpdateRecipeUIVisibility();
     }
 
@@ -160,8 +162,9 @@ public class CookingUIController : MonoBehaviour
             RecipeView view = child.GetComponent<RecipeView>();
             if (view != null)
             {
-                bool visible = selectedStarFilter == 0 || view.RecipeData.starRating == selectedStarFilter;
-                child.gameObject.SetActive(visible);
+                bool matchesStar = selectedStarFilter == 0 || view.RecipeData.starRating == selectedStarFilter;
+                bool matchesSearch = string.IsNullOrEmpty(searchQuery) || view.RecipeData.recipeName.ToLower().Contains(searchQuery);
+                child.gameObject.SetActive(matchesStar && matchesSearch);
             }
         }
     }
@@ -192,15 +195,8 @@ public class CookingUIController : MonoBehaviour
         cookingManager.StartCooking(selectedRecipe);
     }
 
-    private void OnPauseButton()
-    {
-        cookingManager.PauseCooking();
-    }
-
-    private void OnResumeButton()
-    {
-        cookingManager.ResumeCooking();
-    }
+    private void OnPauseButton() => cookingManager.PauseCooking();
+    private void OnResumeButton() => cookingManager.ResumeCooking();
 
     private void UpdateTimerText(int remainingSeconds)
     {
