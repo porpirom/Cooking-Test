@@ -112,19 +112,33 @@ public class CookingManager : MonoBehaviour
     public void StartCooking(RecipeData recipe)
     {
         Debug.Log($"[CookingManager] StartCooking called for {recipe.recipeName}");
-        if (!energySystem.HasEnergy(recipe.energyCost)) Debug.Log("[CookingManager] Not enough energy");
+
+        // เช็คพลังงานก่อน
+        if (!energySystem.HasEnergy(recipe.energyCost))
+        {
+            Debug.Log("[CookingManager] Not enough energy");
+            return; // ออกจากฟังก์ชันทันที
+        }
+
+        // เช็ควัตถุดิบทั้งหมด
         foreach (var ing in recipe.ingredients)
-            if (!inventory.HasItem(ing.id, ing.amount)) Debug.Log($"[CookingManager] Missing ingredient {ing.id}");
+        {
+            if (!inventory.HasItem(ing.id, ing.amount))
+            {
+                Debug.Log($"[CookingManager] Missing ingredient {ing.id}");
+                return; // ออกจากฟังก์ชันทันที
+            }
+        }
 
-        /*if (!energySystem.HasEnergy(recipe.energyCost)) return;
-        foreach (var ing in recipe.ingredients) if (!inventory.HasItem(ing.id, ing.amount)) return;*/
-
+        // ผ่านทุกเงื่อนไขแล้วค่อยหักพลังงานและวัตถุดิบ
         energySystem.UseEnergy(recipe.energyCost);
-        foreach (var ing in recipe.ingredients) inventory.RemoveItem(ing.id, ing.amount);
+        foreach (var ing in recipe.ingredients)
+            inventory.RemoveItem(ing.id, ing.amount);
 
         inventory.SaveToJson(Path.Combine(Application.persistentDataPath, "player_inventory.json"));
         energySystem.SaveEnergy(Path.Combine(Application.persistentDataPath, "player_energy.json"));
 
+        // เริ่มนับเวลา
         endTime = TimeManager.Instance.UtcNow.AddSeconds(recipe.cookingTimeSeconds);
         isCooking = true;
         isPaused = false;
@@ -135,6 +149,7 @@ public class CookingManager : MonoBehaviour
 
         SaveCookingState();
     }
+
 
     private void FinishCookingImmediate()
     {

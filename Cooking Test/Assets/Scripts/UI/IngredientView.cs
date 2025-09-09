@@ -7,9 +7,13 @@ public class IngredientView : MonoBehaviour
     [SerializeField] private TMP_Text amountText;
     [SerializeField] private Image iconImage;
 
-    public void SetData(IngredientRequirement ingredient, Sprite icon)
+    public void SetData(string id, int playerAmount, int requiredAmount, Sprite icon)
     {
-        amountText.text = ingredient.amount.ToString();
-        iconImage.sprite = icon;
+        // ใช้ Rich Text แค่เปลี่ยนสีของจำนวนในกระเป๋า
+        string playerColor = playerAmount < requiredAmount ? "red" : "white";
+        amountText.text = $"<color={playerColor}>{playerAmount}</color>/{requiredAmount}";
+
+        if (icon != null)
+            iconImage.sprite = icon;
     }
 }

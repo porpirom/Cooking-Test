@@ -4,8 +4,8 @@
       "recipeName": "Mushroom Soup",
       "energyCost": 5,
       "ingredients": [
-        { "id": "mushroom", "amount": 2 },
-        { "id": "water", "amount": 1 }
+        { "id": "mushroom", "amount": 2},
+        { "id": "water", "amount": 1}
       ],
       "resultId": "mushroom_soup",
       "cookingTimeSeconds": 60,

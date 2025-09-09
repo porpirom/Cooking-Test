@@ -6,6 +6,8 @@ public class IngredientRequirement
 {
     public string id;
     public int amount;
+    public string iconPath; // JSON path
+    [NonSerialized] public Sprite icon; // loaded runtime
 }
 
 [Serializable]
@@ -21,6 +23,8 @@ public class RecipeData
 
     [Range(1, 3)]
     public int starRating = 1;
+    public string recipeIconPath; // JSON path
+    [NonSerialized] public Sprite recipeIcon; // loaded runtime 
 }
 
 [Serializable]

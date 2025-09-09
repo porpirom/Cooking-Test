@@ -1,0 +1,10 @@
+{
+  "items": [
+    { "id": "mushroom", "name": "Mushroom", "iconPath": "Sprites/Ingredients/mushroom" },
+    { "id": "water", "name": "Water", "iconPath": "Sprites/Ingredients/water" },
+    { "id": "meat", "name": "Meat", "iconPath": "Sprites/Ingredients/meat" },
+    { "id": "salt", "name": "Salt", "iconPath": "Sprites/Ingredients/salt" },
+    { "id": "mushroom_soup", "name": "Mushroom Soup", "iconPath": "Sprites/Recipes/mushroom_soup" },
+    { "id": "grilled_meat", "name": "Grilled Meat", "iconPath": "Sprites/Recipes/grilled_meat" }
+  ]
+}
