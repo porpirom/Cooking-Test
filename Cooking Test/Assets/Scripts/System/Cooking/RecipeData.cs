@@ -18,6 +18,9 @@ public class RecipeData
 
     [Header("Cooking Time")]
     public int cookingTimeSeconds = 10; // default 10s
+
+    [Range(1, 3)]
+    public int starRating = 1;
 }
 
 [Serializable]

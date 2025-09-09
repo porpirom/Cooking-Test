@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -22,7 +23,12 @@ public class CookingUIController : MonoBehaviour
     [SerializeField] private Button pauseButton;
     [SerializeField] private Button resumeButton;
 
+    [Header("Star Filter")]
+    [SerializeField] private TMP_Dropdown starDropdown;
+
     private RecipeData selectedRecipe;
+    private int selectedStarFilter = 0; // 0 = ALL
+    private int maxStar = 3; // default, will be updated dynamically
 
     private void OnEnable()
     {
@@ -50,31 +56,72 @@ public class CookingUIController : MonoBehaviour
             return;
         }
 
-        // Subscribe event
-        cookingManager.RecipeLoader.OnRecipesLoaded += PopulateRecipesUI;
+        // Subscribe event when recipes are loaded
+        cookingManager.RecipeLoader.OnRecipesLoaded += OnRecipesLoaded;
 
-        // ถ้า recipeCollection โหลดแล้ว ให้ populate ทันที
-        if (cookingManager.RecipeLoader.recipeCollection != null &&
-            cookingManager.RecipeLoader.recipeCollection.recipes.Length > 0)
-        {
-            PopulateRecipesUI();
-        }
-
-        // ตั้งค่าปุ่ม cook/pause/resume
+        // Setup buttons
         if (cookButton != null) cookButton.onClick.AddListener(OnCookButton);
         if (pauseButton != null) pauseButton.onClick.AddListener(OnPauseButton);
         if (resumeButton != null) resumeButton.onClick.AddListener(OnResumeButton);
 
-        // อัปเดต UI เริ่มต้น
+        // Setup dropdown event
+        if (starDropdown != null)
+            starDropdown.onValueChanged.AddListener(OnStarFilterChanged);
+
+        // If recipes already loaded, populate immediately
+        if (cookingManager.RecipeLoader.recipeCollection != null &&
+            cookingManager.RecipeLoader.recipeCollection.recipes.Length > 0)
+        {
+            OnRecipesLoaded();
+        }
+
+        // Update initial UI
         UpdateButtonState(cookingManager.isCooking);
         UpdateTimerText(cookingManager.RemainingTime);
     }
 
-    private void PopulateRecipesUI()
+    private void OnRecipesLoaded()
     {
         var recipes = cookingManager.RecipeLoader.recipeCollection.recipes;
-        Debug.Log($"[CookingUI] Recipes count: {recipes.Length}");
+        if (recipes == null || recipes.Length == 0) return;
 
+        // Determine max star dynamically
+        maxStar = 0;
+        foreach (var recipe in recipes)
+        {
+            if (recipe.starRating > maxStar) maxStar = recipe.starRating;
+        }
+
+        SetupStarDropdown();
+
+        // Populate recipe buttons
+        PopulateRecipesUI();
+    }
+
+    private void SetupStarDropdown()
+    {
+        if (starDropdown == null) return;
+
+        List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
+        options.Add(new TMP_Dropdown.OptionData("ALL")); // index 0 = ALL
+
+        for (int i = maxStar; i >= 1; i--)
+        {
+            options.Add(new TMP_Dropdown.OptionData(i + " STAR"));
+        }
+
+        starDropdown.ClearOptions();
+        starDropdown.AddOptions(options);
+        starDropdown.value = 0; // default ALL
+    }
+
+    private void PopulateRecipesUI()
+    {
+        // Clear existing UI
+        foreach (Transform child in recipeListContainer)
+            Destroy(child.gameObject);
+
+        var recipes = cookingManager.RecipeLoader.recipeCollection.recipes;
         foreach (var recipe in recipes)
         {
             GameObject btnObj = Instantiate(recipeButtonPrefab, recipeListContainer);
@@ -82,53 +129,68 @@ public class CookingUIController : MonoBehaviour
             if (view != null)
             {
                 view.SetData(recipe);
-                view.OnRecipeSelected += OnSelectRecipe; // subscribe event
+                view.OnRecipeSelected += OnSelectRecipe;
             }
             else
             {
                 Debug.LogWarning("[CookingUI] recipeButtonPrefab missing RecipeView component!");
             }
         }
+
+        UpdateRecipeUIVisibility();
     }
 
+    private void OnStarFilterChanged(int index)
+    {
+        if (index == 0)
+        {
+            selectedStarFilter = 0; // ALL
+        }
+        else
+        {
+            selectedStarFilter = maxStar - (index - 1);
+        }
+        UpdateRecipeUIVisibility();
+    }
+
+    private void UpdateRecipeUIVisibility()
+    {
+        foreach (Transform child in recipeListContainer)
+        {
+            RecipeView view = child.GetComponent<RecipeView>();
+            if (view != null)
+            {
+                bool visible = selectedStarFilter == 0 || view.RecipeData.starRating == selectedStarFilter;
+                child.gameObject.SetActive(visible);
+            }
+        }
+    }
 
     private void OnSelectRecipe(RecipeData recipe)
     {
-        Debug.Log($"[CookingUI] Selected recipe: {recipe.recipeName}");
         selectedRecipe = recipe;
         UpdateIngredientUI(recipe);
     }
 
     private void UpdateIngredientUI(RecipeData recipe)
     {
-        Debug.Log($"[CookingUI] Updating ingredients for {recipe.recipeName}");
-
         foreach (Transform child in ingredientListContainer)
             Destroy(child.gameObject);
 
         foreach (var ing in recipe.ingredients)
         {
-            Debug.Log($"[CookingUI] Adding ingredient {ing.id} x {ing.amount}");
             GameObject slot = Instantiate(ingredientPrefab, ingredientListContainer);
             TMP_Text txt = slot.GetComponentInChildren<TMP_Text>();
             if (txt != null)
                 txt.text = $"{ing.id} x {ing.amount}";
-            else
-                Debug.LogWarning("[CookingUI] ingredientPrefab missing TMP_Text!");
         }
     }
 
     private void OnCookButton()
     {
-        if (selectedRecipe == null)
-        {
-            Debug.Log("[CookingUI] No recipe selected");
-            return;
-        }
-        Debug.Log($"[CookingUI] Cooking {selectedRecipe.recipeName}");
+        if (selectedRecipe == null) return;
         cookingManager.StartCooking(selectedRecipe);
     }
-
 
     private void OnPauseButton()
     {
@@ -143,7 +205,6 @@ public class CookingUIController : MonoBehaviour
     private void UpdateTimerText(int remainingSeconds)
     {
         if (timerText == null) return;
-
         int minutes = remainingSeconds / 60;
         int seconds = remainingSeconds % 60;
         timerText.text = $"{minutes:00}:{seconds:00}";
@@ -152,7 +213,6 @@ public class CookingUIController : MonoBehaviour
     private void UpdateButtonState(bool isCooking)
     {
         bool isPaused = cookingManager.isPaused;
-
         if (cookButton != null) cookButton.interactable = !isCooking;
         if (pauseButton != null) pauseButton.interactable = isCooking && !isPaused;
         if (resumeButton != null) resumeButton.interactable = isCooking && isPaused;
@@ -160,7 +220,6 @@ public class CookingUIController : MonoBehaviour
 
     private void OnCookingFinished(RecipeData recipe)
     {
-        Debug.Log($"[CookingUI] Finished cooking {recipe.recipeName}");
         UpdateTimerText(0);
         UpdateButtonState(false);
     }
