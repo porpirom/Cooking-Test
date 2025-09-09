@@ -174,7 +174,6 @@ public class CookingUIController : MonoBehaviour
         selectedRecipe = recipe;
         UpdateIngredientUI(recipe);
     }
-
     private void UpdateIngredientUI(RecipeData recipe)
     {
         foreach (Transform child in ingredientListContainer)
@@ -185,7 +184,12 @@ public class CookingUIController : MonoBehaviour
             GameObject slot = Instantiate(ingredientPrefab, ingredientListContainer);
             TMP_Text txt = slot.GetComponentInChildren<TMP_Text>();
             if (txt != null)
-                txt.text = $"{ing.id} x {ing.amount}";
+            {
+                int playerAmount = cookingManager.Inventory.GetItemCount(ing.id);
+                string colorStart = playerAmount < ing.amount ? "<color=#FF0000>" : ""; // ·¥ß∂È“‰¡ËæÕ
+                string colorEnd = playerAmount < ing.amount ? "</color>" : "";
+                txt.text = $"{colorStart}{playerAmount}{colorEnd}/{ing.amount}";
+            }
         }
     }
 
@@ -219,4 +223,5 @@ public class CookingUIController : MonoBehaviour
         UpdateTimerText(0);
         UpdateButtonState(false);
     }
+
 }

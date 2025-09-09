@@ -94,4 +94,11 @@ public class Inventory : MonoBehaviour
             Debug.Log($"{kv.Key}: {kv.Value}");
         }
     }
+    public int GetItemCount(string id)
+    {
+        if (items.ContainsKey(id))
+            return items[id];
+        return 0;
+    }
+
 }

@@ -35,7 +35,7 @@ public class CookingManager : MonoBehaviour
 
     public bool IsCooking => isCooking && !isPaused;
     public RecipeLoader RecipeLoader => recipeLoader;
-
+    public Inventory Inventory => inventory;
 
     public int RemainingTime
     {
@@ -212,4 +212,5 @@ public class CookingManager : MonoBehaviour
         endTime = TimeManager.Instance.FromUnix(state.endTimeUnix);
         pauseStartTime = TimeManager.Instance.FromUnix(state.pauseStartUnix);
     }
+
 }
