@@ -22,7 +22,7 @@ public class InventoryTest : MonoBehaviour
         //inventory.RemoveItem("water", 1);
 
         // Print current inventory
-        inventory.PrintAllItems();
+        //inventory.PrintAllItems();
 
         // Save back to JSON
         inventory.SaveToJson(path);

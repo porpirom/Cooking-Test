@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System;
-using System.Collections;
 using System.IO;
 
 [Serializable]
@@ -8,139 +7,173 @@ public class CookingStateData
 {
     public bool isCooking;
     public string recipeName;
-    public int remainingTime;
-    public long lastSavedTimestamp; // Unix timestamp
+    public long endTimeUnix;
+    public bool isPaused;
+    public long pauseStartUnix;
 }
 
 public class CookingManager : MonoBehaviour
 {
-    [Header("References")]
     [SerializeField] private EnergySystem energySystem;
     [SerializeField] private Inventory inventory;
     [SerializeField] private RecipeLoader recipeLoader;
-
-    [Header("Test Cooking (Inspector)")]
     [SerializeField] private int recipeIndex = 0;
 
-    private bool isCooking = false;
+    // Make these variables public to be accessible by UIManager
+    public bool isCooking = false;
+    public bool isPaused = false;
     private RecipeData currentRecipe;
-    private int remainingTime;
-
+    private DateTime endTime;
+    private DateTime pauseStartTime;
     private string cookingStatePath;
 
-    // Events
+    private string pendingRecipeName = null;
+
     public event Action<int> OnCookingTimeChanged;
     public event Action<bool> OnCookingStateChanged;
     public event Action<RecipeData> OnCookingFinished;
 
-    public bool IsCooking => isCooking;
-    public int RemainingTime => remainingTime;
+    public bool IsCooking => isCooking && !isPaused;
+
+    public int RemainingTime
+    {
+        get
+        {
+            if (!isCooking) return 0;
+            DateTime now = TimeManager.Instance.UtcNow;
+            if (isPaused) return Mathf.Max(0, Mathf.CeilToInt((float)(endTime - pauseStartTime).TotalSeconds));
+            return Mathf.Max(0, Mathf.CeilToInt((float)(endTime - now).TotalSeconds));
+        }
+    }
 
     private void Awake()
     {
-        cookingStatePath = Path.Combine(Application.streamingAssetsPath, "player_cooking.json");
-    }
-    private void Start()
-    {
-        recipeLoader.OnRecipesLoaded += ResumeCookingIfNeeded;
-    }
-    private void ResumeCookingIfNeeded()
-    {
+        cookingStatePath = Path.Combine(Application.persistentDataPath, "player_cooking.json");
+        Debug.Log($"[CookingManager] Save path: {cookingStatePath}");
+
+        // Load state in Awake to ensure it's available before Start
         LoadCookingState();
     }
+
+    private void Start()
+    {
+        string path = Path.Combine(Application.streamingAssetsPath, "player_inventory.json");
+        inventory.LoadFromJson(path);
+
+        recipeLoader.OnRecipesLoaded += () =>
+        {
+            if (!string.IsNullOrEmpty(pendingRecipeName))
+            {
+                currentRecipe = Array.Find(recipeLoader.recipeCollection.recipes, r => r.recipeName == pendingRecipeName);
+                if (currentRecipe != null)
+                {
+                    Debug.Log($"[CookingManager] Resuming cooking: {pendingRecipeName}, remaining={RemainingTime}");
+                    isCooking = true;
+                    // Adjust time to account for the duration the game was closed
+                    if (!isPaused)
+                    {
+                        ResumeCooking();
+                    }
+                    OnCookingStateChanged?.Invoke(true);
+                    OnCookingTimeChanged?.Invoke(RemainingTime);
+                }
+                pendingRecipeName = null;
+            }
+        };
+    }
+
+    private void Update()
+    {
+        if (!isCooking || isPaused) return;
+
+        int remaining = RemainingTime;
+        // The event is now called every frame to ensure a smooth countdown
+        OnCookingTimeChanged?.Invoke(remaining);
+
+        if (remaining <= 0)
+        {
+            FinishCookingImmediate();
+        }
+    }
+
     public void CookSelectedRecipe()
     {
-        if (isCooking)
-        {
-            Debug.LogWarning("[CookingManager] Already cooking!");
-            return;
-        }
-
-        if (recipeLoader == null || recipeLoader.recipeCollection == null || recipeLoader.recipeCollection.recipes.Length == 0)
-        {
-            Debug.LogError("[CookingManager] No recipes loaded!");
-            return;
-        }
+        if (isCooking) return;
+        if (recipeLoader == null || recipeLoader.recipeCollection == null || recipeLoader.recipeCollection.recipes.Length == 0) return;
 
         recipeIndex = Mathf.Clamp(recipeIndex, 0, recipeLoader.recipeCollection.recipes.Length - 1);
         currentRecipe = recipeLoader.recipeCollection.recipes[recipeIndex];
 
-        StartCoroutine(CookCoroutine(currentRecipe));
+        StartCooking(currentRecipe);
     }
 
-    private IEnumerator CookCoroutine(RecipeData recipe, bool resume = false)
+    private void StartCooking(RecipeData recipe)
     {
-        // Check Energy
-        if (!resume && !energySystem.HasEnergy(recipe.energyCost))
-        {
-            Debug.LogWarning($"[CookingManager] Not enough energy! Required: {recipe.energyCost}");
-            yield break;
-        }
+        if (!energySystem.HasEnergy(recipe.energyCost)) return;
+        foreach (var ing in recipe.ingredients) if (!inventory.HasItem(ing.id, ing.amount)) return;
 
-        // Check Inventory
-        if (!resume)
-        {
-            foreach (var ing in recipe.ingredients)
-            {
-                if (!inventory.HasItem(ing.id, ing.amount))
-                {
-                    Debug.LogWarning($"[CookingManager] Not enough {ing.id}! Required: {ing.amount}");
-                    yield break;
-                }
-            }
-        }
+        energySystem.UseEnergy(recipe.energyCost);
+        foreach (var ing in recipe.ingredients) inventory.RemoveItem(ing.id, ing.amount);
 
-        // Deduct Energy & Ingredients (only at start)
-        if (!resume)
-        {
-            energySystem.UseEnergy(recipe.energyCost);
-            foreach (var ing in recipe.ingredients)
-                inventory.RemoveItem(ing.id, ing.amount);
+        inventory.SaveToJson(Path.Combine(Application.persistentDataPath, "player_inventory.json"));
+        energySystem.SaveEnergy(Path.Combine(Application.persistentDataPath, "player_energy.json"));
 
-            // Save Inventory + Energy
-            string invPath = Path.Combine(Application.streamingAssetsPath, "player_inventory.json");
-            inventory.SaveToJson(invPath);
-            string energyPath = Path.Combine(Application.streamingAssetsPath, "player_energy.json");
-            energySystem.SaveEnergy(energyPath);
-
-            remainingTime = recipe.cookingTimeSeconds;
-        }
-
-        // Start cooking
+        endTime = TimeManager.Instance.UtcNow.AddSeconds(recipe.cookingTimeSeconds);
         isCooking = true;
+        isPaused = false;
+        currentRecipe = recipe;
+
         OnCookingStateChanged?.Invoke(true);
+        OnCookingTimeChanged?.Invoke(recipe.cookingTimeSeconds);
+
         SaveCookingState();
-
-        while (remainingTime > 0)
-        {
-            OnCookingTimeChanged?.Invoke(remainingTime);
-            yield return new WaitForSeconds(1f);
-            remainingTime--;
-            SaveCookingState();
-        }
-
-        FinishCookingImmediate();
     }
 
     private void FinishCookingImmediate()
     {
-        inventory.AddItem(currentRecipe.resultId, 1);
-        Debug.Log($"[CookingManager] Finished cooking {currentRecipe.recipeName}!");
+        if (!isCooking) return;
 
+        inventory.AddItem(currentRecipe.resultId, 1);
         isCooking = false;
+        isPaused = false;
+
         OnCookingStateChanged?.Invoke(false);
         OnCookingTimeChanged?.Invoke(0);
         OnCookingFinished?.Invoke(currentRecipe);
 
-        // Save Inventory + Energy
-        string invPath = Path.Combine(Application.streamingAssetsPath, "player_inventory.json");
-        inventory.SaveToJson(invPath);
-        string energyPath = Path.Combine(Application.streamingAssetsPath, "player_energy.json");
-        energySystem.SaveEnergy(energyPath);
+        inventory.SaveToJson(Path.Combine(Application.persistentDataPath, "player_inventory.json"));
+        energySystem.SaveEnergy(Path.Combine(Application.persistentDataPath, "player_energy.json"));
 
-        // Clear cooking state
-        if (File.Exists(cookingStatePath))
-            File.Delete(cookingStatePath);
+        if (File.Exists(cookingStatePath)) File.Delete(cookingStatePath);
+    }
+
+    public void PauseCooking()
+    {
+        if (!isCooking || isPaused) return;
+        pauseStartTime = TimeManager.Instance.UtcNow;
+        isPaused = true;
+        SaveCookingState();
+        OnCookingStateChanged?.Invoke(isCooking);
+    }
+
+    public void ResumeCooking()
+    {
+        if (!isCooking || !isPaused) return;
+        TimeSpan pausedDuration = TimeManager.Instance.UtcNow - pauseStartTime;
+        endTime = endTime.Add(pausedDuration);
+        isPaused = false;
+        SaveCookingState();
+        OnCookingStateChanged?.Invoke(isCooking);
+    }
+
+    private void OnDisable()
+    {
+        if (isCooking) SaveCookingState();
+    }
+
+    private void OnApplicationQuit()
+    {
+        if (isCooking) SaveCookingState();
     }
 
     private void SaveCookingState()
@@ -151,12 +184,12 @@ public class CookingManager : MonoBehaviour
         {
             isCooking = isCooking,
             recipeName = currentRecipe.recipeName,
-            remainingTime = remainingTime,
-            lastSavedTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            endTimeUnix = TimeManager.Instance.ToUnix(endTime),
+            isPaused = isPaused,
+            pauseStartUnix = TimeManager.Instance.ToUnix(pauseStartTime)
         };
 
-        string json = JsonUtility.ToJson(state, true);
-        File.WriteAllText(cookingStatePath, json);
+        File.WriteAllText(cookingStatePath, JsonUtility.ToJson(state, true));
     }
 
     private void LoadCookingState()
@@ -165,28 +198,11 @@ public class CookingManager : MonoBehaviour
 
         string json = File.ReadAllText(cookingStatePath);
         CookingStateData state = JsonUtility.FromJson<CookingStateData>(json);
-
         if (!state.isCooking) return;
 
-        currentRecipe = Array.Find(recipeLoader.recipeCollection.recipes,
-                                   r => r.recipeName == state.recipeName);
-        if (currentRecipe == null) return;
-
-        long nowTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        int elapsed = (int)(nowTimestamp - state.lastSavedTimestamp);
-        remainingTime = Mathf.Max(state.remainingTime - elapsed, 0);
-
-        if (remainingTime == 0)
-        {
-            FinishCookingImmediate();
-            return;
-        }
-
-        isCooking = true;
-        OnCookingStateChanged?.Invoke(true);
-        OnCookingTimeChanged?.Invoke(remainingTime);
-
-        StartCoroutine(CookCoroutine(currentRecipe, resume: true));
+        pendingRecipeName = state.recipeName;
+        isPaused = state.isPaused;
+        endTime = TimeManager.Instance.FromUnix(state.endTimeUnix);
+        pauseStartTime = TimeManager.Instance.FromUnix(state.pauseStartUnix);
     }
-
 }

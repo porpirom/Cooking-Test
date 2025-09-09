@@ -16,7 +16,6 @@ public class Inventory : MonoBehaviour
         return items.ContainsKey(id) && items[id] >= amount;
     }
 
-    // Add item to inventory
     public void AddItem(string id, int amount)
     {
         if (!items.ContainsKey(id))
@@ -24,9 +23,10 @@ public class Inventory : MonoBehaviour
 
         items[id] += amount;
         Debug.Log($"[Inventory] Added {amount} x {id}. Total: {items[id]}");
+
+        SaveToJson(Path.Combine(Application.streamingAssetsPath, "player_inventory.json"));
     }
 
-    // Remove item from inventory
     public bool RemoveItem(string id, int amount)
     {
         if (!HasItem(id, amount))
@@ -40,8 +40,11 @@ public class Inventory : MonoBehaviour
             items.Remove(id);
 
         Debug.Log($"[Inventory] Removed {amount} x {id}. Remaining: {items.GetValueOrDefault(id, 0)}");
+
+        SaveToJson(Path.Combine(Application.streamingAssetsPath, "player_inventory.json"));
         return true;
     }
+
 
     // Save inventory to JSON file
     public void SaveToJson(string path)
@@ -58,7 +61,7 @@ public class Inventory : MonoBehaviour
 
         string json = JsonUtility.ToJson(saveData, true);
         File.WriteAllText(path, json);
-        Debug.Log($"[Inventory] Saved to {path}");
+        //Debug.Log($"[Inventory] Saved to {path}");
     }
 
     // Load inventory from JSON file
@@ -79,7 +82,7 @@ public class Inventory : MonoBehaviour
             items[item.id] = item.amount;
         }
 
-        Debug.Log($"[Inventory] Loaded {items.Count} items from {path}");
+        //Debug.Log($"[Inventory] Loaded {items.Count} items from {path}");
     }
 
     // Debug helper: print all items

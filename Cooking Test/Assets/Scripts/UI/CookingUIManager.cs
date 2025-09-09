@@ -8,9 +8,8 @@ public class CookingUIManager : MonoBehaviour
     [SerializeField] private CookingManager cookingManager;
     [SerializeField] private TMP_Text timerText;
     [SerializeField] private Button cookButton;
-
-    [Header("Inspector Recipe Selection")]
-    [SerializeField] private int recipeIndex = 0;
+    [SerializeField] private Button pauseButton;
+    [SerializeField] private Button resumeButton;
 
     private void OnEnable()
     {
@@ -37,12 +36,15 @@ public class CookingUIManager : MonoBehaviour
         if (cookButton != null)
             cookButton.onClick.AddListener(() => cookingManager.CookSelectedRecipe());
 
-        // Update UI ทันทีจาก CookingManager state
-        if (cookingManager != null)
-        {
-            UpdateTimerText(cookingManager.RemainingTime);
-            UpdateButtonState(cookingManager.IsCooking);
-        }
+        if (pauseButton != null)
+            pauseButton.onClick.AddListener(() => cookingManager.PauseCooking());
+
+        if (resumeButton != null)
+            resumeButton.onClick.AddListener(() => cookingManager.ResumeCooking());
+
+        // Update initial UI based on the manager's current state
+        UpdateButtonState(cookingManager.isCooking);
+        UpdateTimerText(cookingManager.RemainingTime);
     }
 
     private void UpdateTimerText(int remainingSeconds)
@@ -57,13 +59,22 @@ public class CookingUIManager : MonoBehaviour
 
     private void UpdateButtonState(bool isCooking)
     {
+        bool isPaused = cookingManager.isPaused; // Get the paused state directly
+
         if (cookButton != null)
             cookButton.interactable = !isCooking;
+
+        // Pause button is interactable only when cooking and not paused
+        if (pauseButton != null)
+            pauseButton.interactable = isCooking && !isPaused;
+
+        // Resume button is interactable only when cooking and paused
+        if (resumeButton != null)
+            resumeButton.interactable = isCooking && isPaused;
     }
 
     private void OnCookingFinished(RecipeData recipe)
     {
-        // อัปเดต UI ทันทีเมื่อ cooking เสร็จ
         UpdateTimerText(0);
         UpdateButtonState(false);
     }

@@ -22,7 +22,7 @@ public class RecipeLoader : MonoBehaviour
         {
             string json = File.ReadAllText(path);
             recipeCollection = JsonUtility.FromJson<RecipeCollection>(json);
-            Debug.Log($"[RecipeLoader] Loaded {recipeCollection.recipes.Length} recipes");
+            //Debug.Log($"[RecipeLoader] Loaded {recipeCollection.recipes.Length} recipes");
 
             OnRecipesLoaded?.Invoke();
         }

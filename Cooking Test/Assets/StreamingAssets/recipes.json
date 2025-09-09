@@ -8,7 +8,7 @@
         { "id": "water", "amount": 1 }
       ],
       "resultId": "mushroom_soup",
-      "cookingTimeSeconds": 15
+      "cookingTimeSeconds": 60
     },
     {
       "recipeName": "Grilled Meat",
