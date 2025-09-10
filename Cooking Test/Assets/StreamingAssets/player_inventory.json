@@ -1,12 +1,20 @@
 {
     "items": [
         {
-            "id": "water",
-            "amount": 1
+            "id": "egg",
+            "amount": 8
         },
         {
-            "id": "mushroom",
-            "amount": 2
+            "id": "rice",
+            "amount": 8
+        },
+        {
+            "id": "carrot",
+            "amount": 9
+        },
+        {
+            "id": "vegetable",
+            "amount": 8
         }
     ]
 }

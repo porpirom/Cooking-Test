@@ -102,6 +102,8 @@ public class CookingUIController : MonoBehaviour
             if (view != null)
             {
                 Sprite icon = itemDatabase.GetIcon(recipe.resultId);
+                if(icon == null)
+                    Debug.LogWarning($"[CookingUIController] Icon not found for item ID: {recipe.resultId}");
                 string displayName = itemDatabase.GetName(recipe.resultId);
                 view.SetData(recipe, icon, displayName);
                 view.OnRecipeSelected += OnSelectRecipe;

@@ -51,7 +51,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   recipeNameText: {fileID: 4429183351286821669}
-  recipeIconImage: {fileID: 0}
+  recipeIconImage: {fileID: 156740001493151593}
   selectButton: {fileID: 7403399682740936121}
 --- !u!1 &4042800112721081733
 GameObject:
@@ -120,8 +120,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: NA
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: d15ef71b8750d68408585f818fd30ada, type: 2}
+  m_sharedMaterial: {fileID: 605784995236247087, guid: d15ef71b8750d68408585f818fd30ada, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

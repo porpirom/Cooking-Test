@@ -1,24 +1,88 @@
 {
   "recipes": [
     {
-      "recipeName": "Mushroom Soup",
-      "energyCost": 5,
+      "recipeName": "คัสตาร์ด",
+      "energyCost": 10,
       "ingredients": [
-        { "id": "mushroom", "amount": 2},
-        { "id": "water", "amount": 1}
+        {
+          "id": "egg",
+          "amount": 2
+        }
       ],
-      "resultId": "mushroom_soup",
-      "cookingTimeSeconds": 60,
+      "resultId": "custard",
+      "cookingTimeSeconds": 10,
       "starRating": 1
     },
     {
-      "recipeName": "Grilled Meat",
+      "recipeName": "ซาลาเปา",
       "energyCost": 10,
       "ingredients": [
-        { "id": "meat", "amount": 1 },
-        { "id": "salt", "amount": 1 }
+        {
+          "id": "vegetable",
+          "amount": 1
+        },
+        {
+          "id": "egg",
+          "amount": 1
+        },
+        {
+          "id": "rice",
+          "amount": 2
+        }
       ],
-      "resultId": "grilled_meat",
+      "resultId": "stuffed_steamed_bun",
+      "cookingTimeSeconds": 10,
+      "starRating": 2
+    },
+    {
+      "recipeName": "ปานิปูริ",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 2
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        },
+
+        {
+          "id": "carrot",
+          "amount": 4
+        },
+        {
+          "id": "rice",
+          "amount": 2
+        }
+      ],
+      "resultId": "panipuri",
+      "cookingTimeSeconds": 10,
+      "starRating": 3
+    },
+    {
+      "recipeName": "สไปซี่ราเมง",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 2
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        },
+
+        {
+          "id": "carrot",
+          "amount": 1
+        },
+        {
+          "id": "rice",
+          "amount": 2
+        }
+      ],
+      "resultId": "spicy_ramen",
       "cookingTimeSeconds": 60,
       "starRating": 3
     }
