@@ -1,7 +1,10 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using System.Threading.Tasks;
 
 public class CookingUIController : MonoBehaviour
 {
@@ -30,10 +33,14 @@ public class CookingUIController : MonoBehaviour
     private RecipeData selectedRecipe;
     private int selectedStarFilter = 0;
     private int maxStar = 3;
+    private int lastDropdownIndex = -1;
 
-    private void Start()
+    // เก็บ sprite ดาวและกรอบจาก Addressables
+    private Dictionary<int, Sprite> starSprites = new Dictionary<int, Sprite>();
+    private Dictionary<int, Sprite> frameSprites = new Dictionary<int, Sprite>();
+
+    private async void Start()
     {
-        // Load ItemDatabase first
         itemDatabase.LoadFromJson(Application.streamingAssetsPath + "/items.json");
 
         cookButton.onClick.AddListener(OnCookButton);
@@ -43,51 +50,97 @@ public class CookingUIController : MonoBehaviour
         starDropdown.onValueChanged.AddListener(OnStarFilterChanged);
         searchInput.onValueChanged.AddListener(OnSearchChanged);
 
-        // Subscribe event �ͧ CookingManager
         cookingManager.OnCookingTimeChanged += UpdateTimerText;
-
         cookingManager.RecipeLoader.OnRecipesLoaded += OnRecipesLoaded;
+
         if (cookingManager.RecipeLoader.recipeCollection != null &&
             cookingManager.RecipeLoader.recipeCollection.recipes.Length > 0)
         {
-            OnRecipesLoaded();
+            await OnRecipesLoadedAsync();
         }
 
-        // �ѻവ�����������
         UpdateTimerText(cookingManager.RemainingTime);
     }
+
     private void OnDisable()
     {
         if (cookingManager != null)
             cookingManager.OnCookingTimeChanged -= UpdateTimerText;
     }
 
-
-    private void OnRecipesLoaded()
+    private async Task OnRecipesLoadedAsync()
     {
         var recipes = cookingManager.RecipeLoader.recipeCollection.recipes;
         if (recipes == null || recipes.Length == 0) return;
 
         maxStar = 0;
         foreach (var recipe in recipes)
-        {
             if (recipe.starRating > maxStar) maxStar = recipe.starRating;
-        }
+
+        await LoadStarSpritesAsync(maxStar);
+        await LoadFrameSpritesAsync(maxStar);
 
         SetupStarDropdown();
         PopulateRecipesUI();
     }
 
+    private async void OnRecipesLoaded()
+    {
+        await OnRecipesLoadedAsync();
+    }
+
+    private async Task LoadStarSpritesAsync(int maxStar)
+    {
+        starSprites.Clear();
+
+        for (int i = 1; i <= maxStar; i++)
+        {
+            string key = $"Stars/star_{i}";
+            AsyncOperationHandle<Sprite> handle = Addressables.LoadAssetAsync<Sprite>(key);
+            await handle.Task;
+
+            if (handle.Status == AsyncOperationStatus.Succeeded)
+                starSprites[i] = handle.Result;
+            else
+                Debug.LogWarning($"Failed to load {key} from Addressables.");
+        }
+    }
+
+    private async Task LoadFrameSpritesAsync(int maxStar)
+    {
+        frameSprites.Clear();
+
+        for (int i = 1; i <= maxStar; i++)
+        {
+            string key = $"Frames/frame_{i}";
+            AsyncOperationHandle<Sprite> handle = Addressables.LoadAssetAsync<Sprite>(key);
+            await handle.Task;
+
+            if (handle.Status == AsyncOperationStatus.Succeeded)
+                frameSprites[i] = handle.Result;
+            else
+                Debug.LogWarning($"Failed to load {key} from Addressables.");
+        }
+    }
+
     private void SetupStarDropdown()
     {
         List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
-        options.Add(new TMP_Dropdown.OptionData("ALL"));
+
         for (int i = maxStar; i >= 1; i--)
-            options.Add(new TMP_Dropdown.OptionData(i + " STAR"));
+        {
+            if (starSprites.TryGetValue(i, out Sprite icon))
+                options.Add(new TMP_Dropdown.OptionData("", icon));
+            else
+                options.Add(new TMP_Dropdown.OptionData(i + " STAR"));
+        }
 
         starDropdown.ClearOptions();
         starDropdown.AddOptions(options);
-        starDropdown.value = 0;
+
+        starDropdown.value = 0; // เริ่มต้นทั้งหมด
+        selectedStarFilter = 0;
+        lastDropdownIndex = -1;
     }
 
     private void PopulateRecipesUI()
@@ -102,10 +155,13 @@ public class CookingUIController : MonoBehaviour
             if (view != null)
             {
                 Sprite icon = itemDatabase.GetIcon(recipe.resultId);
-                if(icon == null)
-                    Debug.LogWarning($"[CookingUIController] Icon not found for item ID: {recipe.resultId}");
                 string displayName = itemDatabase.GetName(recipe.resultId);
                 view.SetData(recipe, icon, displayName);
+
+                // ใส่กรอบจาก Addressables ตามดาว
+                if (frameSprites.TryGetValue(recipe.starRating, out Sprite frame))
+                    view.SetFrame(frame);
+
                 view.OnRecipeSelected += OnSelectRecipe;
             }
         }
@@ -115,7 +171,19 @@ public class CookingUIController : MonoBehaviour
 
     private void OnStarFilterChanged(int index)
     {
-        selectedStarFilter = (index == 0) ? 0 : maxStar - (index - 1);
+        int clickedStar = maxStar - index;
+
+        if (lastDropdownIndex == index)
+        {
+            selectedStarFilter = 0; // แสดงทั้งหมด
+            lastDropdownIndex = -1;
+        }
+        else
+        {
+            selectedStarFilter = clickedStar;
+            lastDropdownIndex = index;
+        }
+
         UpdateRecipeUIVisibility();
     }
 
@@ -134,6 +202,7 @@ public class CookingUIController : MonoBehaviour
 
             bool starOk = (selectedStarFilter == 0 || view.RecipeData.starRating == selectedStarFilter);
             bool searchOk = string.IsNullOrEmpty(search) || view.RecipeData.recipeName.ToLower().Contains(search);
+
             child.gameObject.SetActive(starOk && searchOk);
         }
     }
