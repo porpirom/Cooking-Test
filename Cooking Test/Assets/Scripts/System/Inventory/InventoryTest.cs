@@ -10,7 +10,7 @@ public class InventoryTest : MonoBehaviour
 
     private void Start()
     {
-        path = Path.Combine(Application.streamingAssetsPath, "player_inventory.json");
+        path = Path.Combine(Application.persistentDataPath, "player_inventory.json");
 
         // Load inventory from JSON
         inventory.LoadFromJson(path);

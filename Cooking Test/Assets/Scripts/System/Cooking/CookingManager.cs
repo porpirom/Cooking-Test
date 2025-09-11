@@ -59,7 +59,7 @@ public class CookingManager : MonoBehaviour
 
     private void Start()
     {
-        string path = Path.Combine(Application.streamingAssetsPath, "player_inventory.json");
+        string path = Path.Combine(Application.persistentDataPath, "player_inventory.json");
         inventory.LoadFromJson(path);
 
         recipeLoader.OnRecipesLoaded += () =>

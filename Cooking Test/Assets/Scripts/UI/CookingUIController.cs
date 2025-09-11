@@ -74,6 +74,9 @@ public class CookingUIController : MonoBehaviour
         cookingManager.OnCookingTimeChanged += UpdateTimerText;
         cookingManager.RecipeLoader.OnRecipesLoaded += OnRecipesLoaded;
 
+        // ⭐ เชื่อมกับ CookingStateChanged
+        cookingManager.OnCookingStateChanged += OnCookingStateChanged;
+
         if (cookingManager.RecipeLoader.recipeCollection != null &&
             cookingManager.RecipeLoader.recipeCollection.recipes.Length > 0)
         {
@@ -81,12 +84,73 @@ public class CookingUIController : MonoBehaviour
         }
 
         UpdateTimerText(cookingManager.RemainingTime);
+
+        // อัพเดต UI ตอนเริ่มเกม
+        OnCookingStateChanged(!cookingManager.IsCooking);
+
+        if (cookingManager.Inventory != null)
+            cookingManager.Inventory.OnInventoryChanged += OnInventoryChanged;
+
     }
 
     private void OnDisable()
     {
         if (cookingManager != null)
+        {
             cookingManager.OnCookingTimeChanged -= UpdateTimerText;
+            cookingManager.OnCookingStateChanged -= OnCookingStateChanged;
+        }
+        if (cookingManager.Inventory != null)
+            cookingManager.Inventory.OnInventoryChanged -= OnInventoryChanged;
+    }
+
+    private void OnInventoryChanged()
+    {
+        // อัพเดต Ingredient UI และปุ่ม cook หากมี recipe ถูกเลือก
+        if (selectedRecipe != null)
+        {
+            UpdateIngredientUI(selectedRecipe);
+            UpdateCookButtonState();
+        }
+    }
+    private void UpdateCookButtonState()
+    {
+        if (selectedRecipe == null)
+        {
+            cookButton.interactable = false;
+            cookButton.GetComponent<Image>().color = Color.gray;
+            return;
+        }
+
+        bool canCook = true;
+
+        foreach (var ing in selectedRecipe.ingredients)
+        {
+            int playerAmount = cookingManager.Inventory.Items.GetValueOrDefault(ing.id, 0);
+            if (playerAmount < ing.amount)
+            {
+                canCook = false;
+                break;
+            }
+        }
+
+        cookButton.interactable = canCook;
+        cookButton.GetComponent<Image>().color = canCook ? Color.white : Color.gray;
+    }
+
+    // จัดการสถานะปุ่ม cook
+    private void OnCookingStateChanged(bool isCooking)
+    {
+        cookButton.interactable = !isCooking;
+
+        if (isCooking)
+        {
+            cookButton.GetComponent<Image>().color = Color.gray; // สีเทา
+        }
+        else
+        {
+            cookButton.GetComponent<Image>().color = Color.white; // กลับมาปกติ
+        }
     }
 
     private async Task OnRecipesLoadedAsync()
@@ -331,11 +395,11 @@ public class CookingUIController : MonoBehaviour
         currentPage = 0;
         ShowPage(currentPage);
     }
-
     private void OnSelectRecipe(RecipeData recipe)
     {
         selectedRecipe = recipe;
         UpdateIngredientUI(recipe);
+        UpdateCookButtonState(); // เพิ่มตรงนี้
     }
 
     private void UpdateIngredientUI(RecipeData recipe)

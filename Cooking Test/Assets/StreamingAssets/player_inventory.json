@@ -1,20 +1,28 @@
 {
     "items": [
         {
-            "id": "egg",
-            "amount": 4
-        },
-        {
             "id": "carrot",
-            "amount": 9
+            "amount": 8
         },
         {
             "id": "vegetable",
-            "amount": 4
+            "amount": 2
         },
         {
             "id": "stuffed_steamed_bun",
             "amount": 2
+        },
+        {
+            "id": "custard",
+            "amount": 2
+        },
+        {
+            "id": "egg",
+            "amount": 1
+        },
+        {
+            "id": "rice",
+            "amount": 1
         }
     ]
 }

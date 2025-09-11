@@ -10,6 +10,8 @@ public class Inventory : MonoBehaviour
     // Read-only access
     public IReadOnlyDictionary<string, int> Items => items;
 
+    public event System.Action OnInventoryChanged;
+
     // Check if enough item exists
     public bool HasItem(string id, int amount)
     {
@@ -18,30 +20,22 @@ public class Inventory : MonoBehaviour
 
     public void AddItem(string id, int amount)
     {
-        if (!items.ContainsKey(id))
-            items[id] = 0;
-
+        if (!items.ContainsKey(id)) items[id] = 0;
         items[id] += amount;
-        Debug.Log($"[Inventory] Added {amount} x {id}. Total: {items[id]}");
-
         SaveToJson(Path.Combine(Application.streamingAssetsPath, "player_inventory.json"));
+
+        OnInventoryChanged?.Invoke(); // á¨é§ Event
     }
 
     public bool RemoveItem(string id, int amount)
     {
-        if (!HasItem(id, amount))
-        {
-            Debug.LogWarning($"[Inventory] Not enough {id} to remove.");
-            return false;
-        }
+        if (!HasItem(id, amount)) return false;
 
         items[id] -= amount;
-        if (items[id] <= 0)
-            items.Remove(id);
-
-        Debug.Log($"[Inventory] Removed {amount} x {id}. Remaining: {items.GetValueOrDefault(id, 0)}");
+        if (items[id] <= 0) items.Remove(id);
 
         SaveToJson(Path.Combine(Application.streamingAssetsPath, "player_inventory.json"));
+        OnInventoryChanged?.Invoke(); // á¨é§ Event
         return true;
     }
 
