@@ -142,7 +142,6 @@ public class CookingUIController : MonoBehaviour
         selectedStarFilter = 0;
         lastDropdownIndex = -1;
     }
-
     private void PopulateRecipesUI()
     {
         foreach (Transform child in recipeListContainer)
@@ -150,17 +149,35 @@ public class CookingUIController : MonoBehaviour
 
         foreach (var recipe in cookingManager.RecipeLoader.recipeCollection.recipes)
         {
-            GameObject btnObj = Instantiate(recipeButtonPrefab, recipeListContainer);
+            // สร้าง parent ตัวกลางให้ GridLayoutGroup จัดการ
+            GameObject cellParent = new GameObject("CellParent", typeof(RectTransform));
+            cellParent.transform.SetParent(recipeListContainer);
+            cellParent.transform.localScale = Vector3.one;
+            cellParent.transform.localPosition = Vector3.zero;
+
+            // สร้างปุ่ม/รูปเข้าไปใน parent ตัวกลาง
+            GameObject btnObj = Instantiate(recipeButtonPrefab, cellParent.transform);
+            btnObj.transform.localScale = Vector3.one;
+            btnObj.transform.localPosition = Vector3.zero;
+
             RecipeView view = btnObj.GetComponent<RecipeView>();
             if (view != null)
             {
+                // ตั้งค่าข้อมูล recipe
                 Sprite icon = itemDatabase.GetIcon(recipe.resultId);
                 string displayName = itemDatabase.GetName(recipe.resultId);
                 view.SetData(recipe, icon, displayName);
 
-                // ใส่กรอบจาก Addressables ตามดาว
+                // ใส่ frame จาก Addressables ตามดาว
                 if (frameSprites.TryGetValue(recipe.starRating, out Sprite frame))
+                {
                     view.SetFrame(frame);
+
+                    // ตั้ง AspectRatioFitter อัตโนมัติตาม frame
+                    var arf = btnObj.AddComponent<AspectRatioFitter>();
+                    arf.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+                    arf.aspectRatio = (float)frame.rect.width / frame.rect.height;
+                }
 
                 view.OnRecipeSelected += OnSelectRecipe;
             }
