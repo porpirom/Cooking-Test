@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
+using System.Linq;
+using System.Threading.Tasks;
 using TMPro;
+using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using System.Threading.Tasks;
+using UnityEngine.UI;
 
 public class CookingUIController : MonoBehaviour
 {
@@ -30,6 +31,20 @@ public class CookingUIController : MonoBehaviour
     [SerializeField] private TMP_Dropdown starDropdown;
     [SerializeField] private TMP_InputField searchInput;
 
+    [Header("Pagination")]
+    [SerializeField] private Button nextPageButton;
+    [SerializeField] private Button prevPageButton;
+
+    [Header("Page Indicator")]
+    [SerializeField] private Transform pageIndicatorContainer;
+    [SerializeField] private GameObject indicatorPrefab;
+
+    private List<GameObject> pageIndicators = new List<GameObject>();
+
+    private List<GameObject> recipeButtons = new List<GameObject>();
+    private int currentPage = 0;
+    private int recipesPerPage = 4;
+
     private RecipeData selectedRecipe;
     private int selectedStarFilter = 0;
     private int maxStar = 3;
@@ -38,6 +53,9 @@ public class CookingUIController : MonoBehaviour
     // เก็บ sprite ดาวและกรอบจาก Addressables
     private Dictionary<int, Sprite> starSprites = new Dictionary<int, Sprite>();
     private Dictionary<int, Sprite> frameSprites = new Dictionary<int, Sprite>();
+
+    private List<GameObject> allRecipeButtons = new List<GameObject>();
+    private List<GameObject> filteredRecipeButtons = new List<GameObject>();
 
     private async void Start()
     {
@@ -49,6 +67,9 @@ public class CookingUIController : MonoBehaviour
 
         starDropdown.onValueChanged.AddListener(OnStarFilterChanged);
         searchInput.onValueChanged.AddListener(OnSearchChanged);
+
+        nextPageButton.onClick.AddListener(OnNextPage);
+        prevPageButton.onClick.AddListener(OnPrevPage);
 
         cookingManager.OnCookingTimeChanged += UpdateTimerText;
         cookingManager.RecipeLoader.OnRecipesLoaded += OnRecipesLoaded;
@@ -147,34 +168,27 @@ public class CookingUIController : MonoBehaviour
     {
         foreach (Transform child in recipeListContainer)
             Destroy(child.gameObject);
+        allRecipeButtons.Clear();
 
         foreach (var recipe in cookingManager.RecipeLoader.recipeCollection.recipes)
         {
-            // สร้าง parent ตัวกลางให้ GridLayoutGroup จัดการ
             GameObject cellParent = new GameObject("CellParent", typeof(RectTransform));
             cellParent.transform.SetParent(recipeListContainer);
             cellParent.transform.localScale = Vector3.one;
-            cellParent.transform.localPosition = Vector3.zero;
 
-            // สร้างปุ่ม/รูปเข้าไปใน parent ตัวกลาง
             GameObject btnObj = Instantiate(recipeButtonPrefab, cellParent.transform);
             btnObj.transform.localScale = Vector3.one;
-            btnObj.transform.localPosition = Vector3.zero;
 
             RecipeView view = btnObj.GetComponent<RecipeView>();
             if (view != null)
             {
-                // ตั้งค่าข้อมูล recipe
                 Sprite icon = itemDatabase.GetIcon(recipe.resultId);
                 string displayName = itemDatabase.GetName(recipe.resultId);
                 view.SetData(recipe, icon, displayName);
 
-                // ใส่ frame จาก Addressables ตามดาว
                 if (frameSprites.TryGetValue(recipe.starRating, out Sprite frame))
                 {
                     view.SetFrame(frame);
-
-                    // ตั้ง AspectRatioFitter อัตโนมัติตาม frame
                     var arf = btnObj.AddComponent<AspectRatioFitter>();
                     arf.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
                     arf.aspectRatio = (float)frame.rect.width / frame.rect.height;
@@ -182,9 +196,93 @@ public class CookingUIController : MonoBehaviour
 
                 view.OnRecipeSelected += OnSelectRecipe;
             }
+
+            allRecipeButtons.Add(cellParent);
         }
 
-        UpdateRecipeUIVisibility();
+        ApplyFilters(); // เริ่มด้วย filter ครั้งแรก
+    }
+    private void ShowPage(int page)
+    {
+        if (filteredRecipeButtons.Count == 0)
+        {
+            prevPageButton.gameObject.SetActive(false);
+            nextPageButton.gameObject.SetActive(false);
+            ClearIndicators();
+            return;
+        }
+
+        int startIndex = page * recipesPerPage;
+        int endIndex = startIndex + recipesPerPage;
+
+        for (int i = 0; i < filteredRecipeButtons.Count; i++)
+        {
+            filteredRecipeButtons[i].SetActive(i >= startIndex && i < endIndex);
+        }
+
+        int maxPage = (filteredRecipeButtons.Count - 1) / recipesPerPage;
+        bool multiplePages = (maxPage > 0);
+        prevPageButton.gameObject.SetActive(multiplePages);
+        nextPageButton.gameObject.SetActive(multiplePages);
+
+        UpdatePageIndicators(page, maxPage + 1);
+    }
+
+
+    private void OnNextPage()
+    {
+        if (filteredRecipeButtons.Count == 0) return;
+
+        int maxPage = (filteredRecipeButtons.Count - 1) / recipesPerPage;
+
+        if (currentPage < maxPage)
+            currentPage++;
+        else
+            currentPage = 0; // วนไปหน้าแรก
+
+        ShowPage(currentPage);
+    }
+
+    private void OnPrevPage()
+    {
+        if (filteredRecipeButtons.Count == 0) return;
+
+        int maxPage = (filteredRecipeButtons.Count - 1) / recipesPerPage;
+
+        if (currentPage > 0)
+            currentPage--;
+        else
+            currentPage = maxPage; // วนไปหน้าสุดท้าย
+
+        ShowPage(currentPage);
+    }
+    private void UpdatePageIndicators(int currentPage, int totalPages)
+    {
+        // ลบเก่าออกก่อน
+        ClearIndicators();
+
+        pageIndicators.Clear();
+
+        for (int i = 0; i < totalPages; i++)
+        {
+            GameObject dot = Instantiate(indicatorPrefab, pageIndicatorContainer);
+            Image img = dot.GetComponent<Image>();
+
+            if (i == currentPage)
+                img.color = Color.white; // active (ทึบ)
+            else
+                img.color = new Color(1f, 1f, 1f, 0.3f); // inactive (โปร่ง)
+
+            pageIndicators.Add(dot);
+        }
+    }
+
+    private void ClearIndicators()
+    {
+        foreach (Transform child in pageIndicatorContainer)
+        {
+            Destroy(child.gameObject);
+        }
     }
 
     private void OnStarFilterChanged(int index)
@@ -193,7 +291,7 @@ public class CookingUIController : MonoBehaviour
 
         if (lastDropdownIndex == index)
         {
-            selectedStarFilter = 0; // แสดงทั้งหมด
+            selectedStarFilter = 0;
             lastDropdownIndex = -1;
         }
         else
@@ -202,27 +300,36 @@ public class CookingUIController : MonoBehaviour
             lastDropdownIndex = index;
         }
 
-        UpdateRecipeUIVisibility();
+        ApplyFilters();
     }
 
     private void OnSearchChanged(string text)
     {
-        UpdateRecipeUIVisibility();
+        ApplyFilters();
     }
 
-    private void UpdateRecipeUIVisibility()
+    private void ApplyFilters()
     {
         string search = searchInput.text.ToLower();
-        foreach (Transform child in recipeListContainer)
+
+        filteredRecipeButtons = allRecipeButtons.Where(obj =>
         {
-            RecipeView view = child.GetComponentInChildren<RecipeView>(); // ใช้ GetComponentInChildren
-            if (view == null) continue;
+            RecipeView view = obj.GetComponentInChildren<RecipeView>();
+            if (view == null) return false;
 
             bool starOk = (selectedStarFilter == 0 || view.RecipeData.starRating == selectedStarFilter);
-            bool searchOk = string.IsNullOrEmpty(search) || view.RecipeData.recipeName.ToLower().Contains(search);
+            bool searchOk = string.IsNullOrEmpty(search) ||
+                            view.RecipeData.recipeName.ToLower().Contains(search);
 
-            child.gameObject.SetActive(starOk && searchOk);
-        }
+            return starOk && searchOk;
+        }).ToList();
+
+        // ปิดทุกอันก่อน
+        foreach (var obj in allRecipeButtons)
+            obj.SetActive(false);
+
+        currentPage = 0;
+        ShowPage(currentPage);
     }
 
     private void OnSelectRecipe(RecipeData recipe)

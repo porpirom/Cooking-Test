@@ -85,6 +85,136 @@
       "resultId": "spicy_ramen",
       "cookingTimeSeconds": 60,
       "starRating": 3
+    },
+    {
+      "recipeName": "สไปซี่ราเมง",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 2
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        },
+
+        {
+          "id": "carrot",
+          "amount": 1
+        },
+        {
+          "id": "rice",
+          "amount": 2
+        }
+      ],
+      "resultId": "spicy_ramen",
+      "cookingTimeSeconds": 60,
+      "starRating": 3
+    },
+    {
+      "recipeName": "สไปซี่ราเมง",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 2
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        },
+
+        {
+          "id": "carrot",
+          "amount": 1
+        },
+        {
+          "id": "rice",
+          "amount": 2
+        }
+      ],
+      "resultId": "spicy_ramen",
+      "cookingTimeSeconds": 60,
+      "starRating": 3
+    },
+    {
+      "recipeName": "สไปซี่ราเมง",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 2
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        },
+
+        {
+          "id": "carrot",
+          "amount": 1
+        },
+        {
+          "id": "rice",
+          "amount": 2
+        }
+      ],
+      "resultId": "spicy_ramen",
+      "cookingTimeSeconds": 60,
+      "starRating": 3
+    },
+    {
+      "recipeName": "สไปซี่ราเมง",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 2
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        },
+
+        {
+          "id": "carrot",
+          "amount": 1
+        },
+        {
+          "id": "rice",
+          "amount": 2
+        }
+      ],
+      "resultId": "spicy_ramen",
+      "cookingTimeSeconds": 60,
+      "starRating": 3
+    },
+    {
+      "recipeName": "สไปซี่ราเมง",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 2
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        },
+
+        {
+          "id": "carrot",
+          "amount": 1
+        },
+        {
+          "id": "rice",
+          "amount": 2
+        }
+      ],
+      "resultId": "spicy_ramen",
+      "cookingTimeSeconds": 60,
+      "starRating": 3
     }
   ]
 }
