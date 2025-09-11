@@ -82,6 +82,7 @@ public class CookingUIController : MonoBehaviour
 
         SetupStarDropdown();
         PopulateRecipesUI();
+
     }
 
     private async void OnRecipesLoaded()
@@ -214,7 +215,7 @@ public class CookingUIController : MonoBehaviour
         string search = searchInput.text.ToLower();
         foreach (Transform child in recipeListContainer)
         {
-            RecipeView view = child.GetComponent<RecipeView>();
+            RecipeView view = child.GetComponentInChildren<RecipeView>(); // ใช้ GetComponentInChildren
             if (view == null) continue;
 
             bool starOk = (selectedStarFilter == 0 || view.RecipeData.starRating == selectedStarFilter);
