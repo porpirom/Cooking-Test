@@ -23,6 +23,7 @@ public class CookingManager : MonoBehaviour
     [SerializeField] private Sprite[] starSprites;   // index 0 = ดาว 1 ดวง, index 1 = ดาว 2 ดวง...
     [SerializeField] private Sprite[] frameSprites;  // index 0 = กรอบ 1 ดาว, index 1 = กรอบ 2 ดาว...
 
+    [SerializeField] CookingPotAnimationController cookingPotAnimationController;
     // Make these variables public to be accessible by UIManager
     public bool isCooking = false;
     public bool isPaused = false;
@@ -40,6 +41,7 @@ public class CookingManager : MonoBehaviour
     public bool IsCooking => isCooking && !isPaused;
     public RecipeLoader RecipeLoader => recipeLoader;
     public Inventory Inventory => inventory;
+    public CookingPotAnimationController PotAnimationController => cookingPotAnimationController;
 
     public int RemainingTime
     {
@@ -142,6 +144,7 @@ public class CookingManager : MonoBehaviour
         }
 
         // ผ่านทุกเงื่อนไขแล้วค่อยหักพลังงานและวัตถุดิบ
+        UpdateCookingAnimation();
         energySystem.UseEnergy(recipe.energyCost);
         foreach (var ing in recipe.ingredients)
             inventory.RemoveItem(ing.id, ing.amount);
@@ -151,9 +154,12 @@ public class CookingManager : MonoBehaviour
 
         // เริ่มนับเวลา
         endTime = TimeManager.Instance.UtcNow.AddSeconds(recipe.cookingTimeSeconds);
-        isCooking = true;
+        isCooking = true;   // ตั้งค่านี้ก่อน
         isPaused = false;
         currentRecipe = recipe;
+
+        // --- เรียก animation หลังตั้ง isCooking ---
+        cookingPotAnimationController.PlayCookingIdle();
 
         OnCookingStateChanged?.Invoke(true);
         OnCookingTimeChanged?.Invoke(recipe.cookingTimeSeconds);
@@ -167,6 +173,7 @@ public class CookingManager : MonoBehaviour
         inventory.AddItem(currentRecipe.resultId, 1);
         isCooking = false;
         isPaused = false;
+        cookingPotAnimationController.PlaySuccessSequence();
 
         OnCookingStateChanged?.Invoke(false);
         OnCookingTimeChanged?.Invoke(0);
@@ -197,7 +204,7 @@ public class CookingManager : MonoBehaviour
     public void ResumeCooking()
     {
         if (!isCooking || !isPaused) return;
-
+        UpdateCookingAnimation();
         TimeSpan pausedDuration = TimeManager.Instance.UtcNow - pauseStartTime;
         endTime = endTime.Add(pausedDuration);
         isPaused = false;
@@ -254,6 +261,18 @@ public class CookingManager : MonoBehaviour
             isPaused = false;
             currentRecipe = null;
             if (File.Exists(cookingStatePath)) File.Delete(cookingStatePath);
+        }
+    }
+    private void UpdateCookingAnimation()
+    {
+        if (!isCooking)
+        {
+            cookingPotAnimationController.PlayAnimation("idle");
+            cookingPotAnimationController.SetIsCookingIdlePlaying = false; // reset flag
+        }
+        else
+        {
+            cookingPotAnimationController.PlayCookingIdle(); // เรียกครั้งเดียว
         }
     }
 

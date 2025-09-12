@@ -48,7 +48,7 @@ public class CookingUIController : MonoBehaviour
     [Header("Notification UI")]
     [SerializeField] private GameObject itemReceivedPopup;   // หน้าต่างแจ้งเตือน
     [SerializeField] private Transform itemDisplayContainer;  // ไว้วาง RecipeView/ItemView
-
+    [SerializeField] private Button itemReceivedCloseButton;  // ปุ่มปิด popup
 
     private List<GameObject> pageIndicators = new List<GameObject>();
 
@@ -83,6 +83,9 @@ public class CookingUIController : MonoBehaviour
 
         cookingManager.OnCookingTimeChanged += UpdateTimerText;
         cookingManager.RecipeLoader.OnRecipesLoaded += OnRecipesLoaded;
+
+        if (itemReceivedCloseButton != null)
+            itemReceivedCloseButton.onClick.AddListener(OnCloseItemReceivedPopup);
 
         // ⭐ เชื่อมกับ CookingStateChanged
         cookingManager.OnCookingStateChanged += OnCookingStateChanged;
@@ -417,14 +420,11 @@ public class CookingUIController : MonoBehaviour
     }
     public void ShowItemReceivedPopup(RecipeData recipe)
     {
-        // เปิดหน้าต่าง
         itemReceivedPopup.SetActive(true);
 
-        // ลบของเก่าออกก่อน
         foreach (Transform child in itemDisplayContainer)
             Destroy(child.gameObject);
 
-        // สร้าง RecipeView ใต้ container
         GameObject obj = Instantiate(recipeButtonPrefab, itemDisplayContainer);
         obj.transform.localScale = Vector3.one;
 
@@ -436,12 +436,19 @@ public class CookingUIController : MonoBehaviour
 
             view.SetData(recipe, icon, displayName);
 
-            // ปิดการกด
             Button btn = view.GetComponent<Button>();
             if (btn != null) btn.interactable = false;
         }
     }
 
+    private void OnCloseItemReceivedPopup()
+    {
+        if (itemReceivedPopup != null)
+            itemReceivedPopup.SetActive(false);
+
+        if (cookingManager != null && cookingManager.PotAnimationController != null)
+            cookingManager.PotAnimationController.PlayAnimation("idle");
+    }
     private void OnCookButton() { if (selectedRecipe != null) cookingManager.StartCooking(selectedRecipe); }
     private void OnPauseButton() { cookingManager.PauseCooking(); }
     private void OnResumeButton() { cookingManager.ResumeCooking(); }
