@@ -41,6 +41,10 @@ public class CookingUIController : MonoBehaviour
     [SerializeField] private Transform pageIndicatorContainer;
     [SerializeField] private GameObject indicatorPrefab;
 
+    [Header("Page Indicator Sprites")]
+    [SerializeField] private Sprite indicatorNormalSprite;
+    [SerializeField] private Sprite indicatorActiveSprite;
+
     private List<GameObject> pageIndicators = new List<GameObject>();
 
     private List<GameObject> recipeButtons = new List<GameObject>();
@@ -303,7 +307,6 @@ public class CookingUIController : MonoBehaviour
     }
     private void UpdatePageIndicators(int currentPage, int totalPages)
     {
-        // ลบเก่าออกก่อน
         ClearIndicators();
 
         pageIndicators.Clear();
@@ -313,14 +316,12 @@ public class CookingUIController : MonoBehaviour
             GameObject dot = Instantiate(indicatorPrefab, pageIndicatorContainer);
             Image img = dot.GetComponent<Image>();
 
-            if (i == currentPage)
-                img.color = Color.white; // active (ทึบ)
-            else
-                img.color = new Color(1f, 1f, 1f, 0.3f); // inactive (โปร่ง)
+            img.sprite = (i == currentPage) ? indicatorActiveSprite : indicatorNormalSprite;
 
             pageIndicators.Add(dot);
         }
     }
+
 
     private void ClearIndicators()
     {
