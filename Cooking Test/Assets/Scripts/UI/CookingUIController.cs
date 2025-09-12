@@ -30,8 +30,10 @@ public class CookingUIController : MonoBehaviour
     [SerializeField] private Sprite cookButtonDisabledSprite;
 
     [Header("Filters")]
-    [SerializeField] private TMP_Dropdown starDropdown;
+    [SerializeField] private Transform starFilterContainer;
+    [SerializeField] private GameObject starFilterButtonPrefab;
     [SerializeField] private TMP_InputField searchInput;
+    [SerializeField] private Button toggleDropdownButton;
 
     [Header("Pagination")]
     [SerializeField] private Button nextPageButton;
@@ -46,11 +48,12 @@ public class CookingUIController : MonoBehaviour
     [SerializeField] private Sprite indicatorActiveSprite;
 
     [Header("Notification UI")]
-    [SerializeField] private GameObject itemReceivedPopup;   // หน้าต่างแจ้งเตือน
-    [SerializeField] private Transform itemDisplayContainer;  // ไว้วาง RecipeView/ItemView
-    [SerializeField] private Button itemReceivedCloseButton;  // ปุ่มปิด popup
+    [SerializeField] private GameObject itemReceivedPopup;
+    [SerializeField] private Transform itemDisplayContainer;
+    [SerializeField] private Button itemReceivedCloseButton;
 
     private List<GameObject> pageIndicators = new List<GameObject>();
+    private List<GameObject> starFilterButtons = new List<GameObject>(); // เพิ่มตัวแปรสำหรับเก็บปุ่มดาว
 
     private List<GameObject> recipeButtons = new List<GameObject>();
     private int currentPage = 0;
@@ -59,7 +62,6 @@ public class CookingUIController : MonoBehaviour
     private RecipeData selectedRecipe;
     private int selectedStarFilter = 0;
     private int maxStar = 3;
-    private int lastDropdownIndex = -1;
 
     // เก็บ sprite ดาวและกรอบจาก Addressables
     private Dictionary<int, Sprite> starSprites = new Dictionary<int, Sprite>();
@@ -69,14 +71,17 @@ public class CookingUIController : MonoBehaviour
 
     private async void Start()
     {
+        // ย้ายการเรียก SetupStarFilterButtons ไปไว้ใน OnRecipesLoadedAsync
+        // เพื่อให้แน่ใจว่าได้ค่า maxStar ที่ถูกต้องก่อนสร้างปุ่ม
+
         itemDatabase.LoadFromJson(Application.streamingAssetsPath + "/items.json");
 
         cookButton.onClick.AddListener(OnCookButton);
         pauseButton.onClick.AddListener(OnPauseButton);
         resumeButton.onClick.AddListener(OnResumeButton);
 
-        starDropdown.onValueChanged.AddListener(OnStarFilterChanged);
         searchInput.onValueChanged.AddListener(OnSearchChanged);
+        toggleDropdownButton.onClick.AddListener(ToggleStarFilterDropdown);
 
         nextPageButton.onClick.AddListener(OnNextPage);
         prevPageButton.onClick.AddListener(OnPrevPage);
@@ -87,7 +92,6 @@ public class CookingUIController : MonoBehaviour
         if (itemReceivedCloseButton != null)
             itemReceivedCloseButton.onClick.AddListener(OnCloseItemReceivedPopup);
 
-        // ⭐ เชื่อมกับ CookingStateChanged
         cookingManager.OnCookingStateChanged += OnCookingStateChanged;
 
         if (cookingManager.RecipeLoader.recipeCollection != null &&
@@ -98,12 +102,10 @@ public class CookingUIController : MonoBehaviour
 
         UpdateTimerText(cookingManager.RemainingTime);
 
-        // อัพเดต UI ตอนเริ่มเกม
         OnCookingStateChanged(!cookingManager.IsCooking);
 
         if (cookingManager.Inventory != null)
             cookingManager.Inventory.OnInventoryChanged += OnInventoryChanged;
-
     }
 
     private void OnDisable()
@@ -119,24 +121,23 @@ public class CookingUIController : MonoBehaviour
 
     private void OnInventoryChanged()
     {
-        // อัพเดต Ingredient UI และปุ่ม cook หากมี recipe ถูกเลือก
         if (selectedRecipe != null)
         {
             UpdateIngredientUI(selectedRecipe);
             UpdateCookButtonState();
         }
     }
+
     private void UpdateCookButtonState()
     {
         if (selectedRecipe == null)
         {
             cookButton.interactable = false;
-            cookButton.GetComponent<Image>().sprite = cookButtonDisabledSprite; // Set to disabled sprite
+            cookButton.GetComponent<Image>().sprite = cookButtonDisabledSprite;
             return;
         }
 
         bool canCook = true;
-
         foreach (var ing in selectedRecipe.ingredients)
         {
             int playerAmount = cookingManager.Inventory.Items.GetValueOrDefault(ing.id, 0);
@@ -148,14 +149,13 @@ public class CookingUIController : MonoBehaviour
         }
 
         cookButton.interactable = canCook;
-        // Use sprite based on ingredient availability
         cookButton.GetComponent<Image>().sprite = canCook ? cookButtonEnabledSprite : cookButtonDisabledSprite;
     }
+
     private void OnCookingStateChanged(bool isCooking)
     {
         cookButton.interactable = !isCooking;
 
-        // Use sprite based on cooking state
         if (isCooking)
         {
             cookButton.GetComponent<Image>().sprite = cookButtonDisabledSprite;
@@ -165,6 +165,7 @@ public class CookingUIController : MonoBehaviour
             cookButton.GetComponent<Image>().sprite = cookButtonEnabledSprite;
         }
     }
+
     private async Task OnRecipesLoadedAsync()
     {
         var recipes = cookingManager.RecipeLoader.recipeCollection.recipes;
@@ -176,9 +177,9 @@ public class CookingUIController : MonoBehaviour
 
         await LoadStarSpritesAsync(maxStar);
 
-        SetupStarDropdown();
+        // เรียก SetupStarFilterButtons หลังจากโหลด sprite ดาวเสร็จแล้ว
+        SetupStarFilterButtons();
         PopulateRecipesUI();
-
     }
 
     private async void OnRecipesLoaded()
@@ -203,24 +204,52 @@ public class CookingUIController : MonoBehaviour
         }
     }
 
-    private void SetupStarDropdown()
+    private void SetupStarFilterButtons()
     {
-        List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
-
-        for (int i = maxStar; i >= 1; i--)
+        foreach (Transform child in starFilterContainer)
         {
-            if (starSprites.TryGetValue(i, out Sprite icon))
-                options.Add(new TMP_Dropdown.OptionData("", icon)); // ใช้ sprite จาก Addressables เฉพาะ filter
-            else
-                options.Add(new TMP_Dropdown.OptionData(i + " STAR"));
+            Destroy(child.gameObject);
         }
+        starFilterButtons.Clear(); // เคลียร์รายการปุ่มเก่า
 
-        starDropdown.ClearOptions();
-        starDropdown.AddOptions(options);
+        for (int i = 1; i <= maxStar; i++)
+        {
+            GameObject starButton = Instantiate(starFilterButtonPrefab, starFilterContainer);
+            starFilterButtons.Add(starButton);
 
-        starDropdown.value = 0;
-        selectedStarFilter = 0;
-        lastDropdownIndex = -1;
+            
+            Image backgroundImage = starButton.GetComponentInChildren<Image>();
+            Image starImage = backgroundImage.transform.GetChild(0).GetComponent<Image>();
+
+            if (starSprites.TryGetValue(i, out Sprite sprite))
+            {
+                starImage.sprite = sprite;
+            }
+            /*// ปรับสีปุ่มให้รู้ว่า active หรือไม่
+            starImage.color = (selectedStarFilter == i) ? Color.yellow : Color.white;*/
+
+            int starValue = i;
+            starButton.GetComponentInChildren<Button>().onClick.AddListener(() => OnStarFilterChanged(starValue));
+        }
+    }
+
+    private void OnStarFilterChanged(int starValue)
+    {
+        if (selectedStarFilter == starValue)
+        {
+            selectedStarFilter = 0;
+        }
+        else
+        {
+            selectedStarFilter = starValue;
+        }
+        ApplyFilters();
+        CloseStarFilterContainer(false);
+    }
+    private void ToggleStarFilterDropdown()
+    {
+        starFilterContainer.gameObject.SetActive(!starFilterContainer.gameObject.activeSelf);
+        starFilterContainer.GetComponentInParent<Image>().enabled = starFilterContainer.gameObject.activeSelf;
     }
 
     private void PopulateRecipesUI()
@@ -243,15 +272,11 @@ public class CookingUIController : MonoBehaviour
             {
                 Sprite icon = itemDatabase.GetIcon(recipe.resultId);
                 string displayName = itemDatabase.GetName(recipe.resultId);
-
-                // Replace these two lines in PopulateRecipesUI:
                 Sprite starSprite = starSprites.ContainsKey(1) ? starSprites[1] : null;
 
                 view.SetData(recipe, icon, displayName);
-
                 view.OnRecipeSelected += OnSelectRecipe;
             }
-
 
             allRecipeButtons.Add(cellParent);
         }
@@ -285,7 +310,6 @@ public class CookingUIController : MonoBehaviour
         UpdatePageIndicators(page, maxPage + 1);
     }
 
-
     private void OnNextPage()
     {
         if (filteredRecipeButtons.Count == 0) return;
@@ -295,7 +319,7 @@ public class CookingUIController : MonoBehaviour
         if (currentPage < maxPage)
             currentPage++;
         else
-            currentPage = 0; // วนไปหน้าแรก
+            currentPage = 0;
 
         ShowPage(currentPage);
     }
@@ -309,27 +333,24 @@ public class CookingUIController : MonoBehaviour
         if (currentPage > 0)
             currentPage--;
         else
-            currentPage = maxPage; // วนไปหน้าสุดท้าย
+            currentPage = maxPage;
 
         ShowPage(currentPage);
     }
+
     private void UpdatePageIndicators(int currentPage, int totalPages)
     {
         ClearIndicators();
-
         pageIndicators.Clear();
 
         for (int i = 0; i < totalPages; i++)
         {
             GameObject dot = Instantiate(indicatorPrefab, pageIndicatorContainer);
             Image img = dot.GetComponent<Image>();
-
             img.sprite = (i == currentPage) ? indicatorActiveSprite : indicatorNormalSprite;
-
             pageIndicators.Add(dot);
         }
     }
-
 
     private void ClearIndicators()
     {
@@ -337,24 +358,6 @@ public class CookingUIController : MonoBehaviour
         {
             Destroy(child.gameObject);
         }
-    }
-
-    private void OnStarFilterChanged(int index)
-    {
-        int clickedStar = maxStar - index;
-
-        if (lastDropdownIndex == index)
-        {
-            selectedStarFilter = 0;
-            lastDropdownIndex = -1;
-        }
-        else
-        {
-            selectedStarFilter = clickedStar;
-            lastDropdownIndex = index;
-        }
-
-        ApplyFilters();
     }
 
     private void OnSearchChanged(string text)
@@ -378,12 +381,16 @@ public class CookingUIController : MonoBehaviour
             return starOk && searchOk;
         }).ToList();
 
-        // ปิดทุกอันก่อน
         foreach (var obj in allRecipeButtons)
             obj.SetActive(false);
 
         currentPage = 0;
         ShowPage(currentPage);
+    }
+    private void CloseStarFilterContainer(bool isActive)
+    {
+        starFilterContainer.gameObject.SetActive(isActive);
+        starFilterContainer.GetComponentInParent<Image>().enabled = isActive;
     }
     private void OnSelectRecipe(RecipeData recipe)
     {
@@ -391,7 +398,6 @@ public class CookingUIController : MonoBehaviour
         UpdateIngredientUI(recipe);
         UpdateCookButtonState();
 
-        // อัพเดต highlight ทุก recipe
         foreach (var obj in allRecipeButtons)
         {
             RecipeView view = obj.GetComponentInChildren<RecipeView>();
@@ -399,7 +405,6 @@ public class CookingUIController : MonoBehaviour
                 view.SetHighlight(view.RecipeData == selectedRecipe);
         }
     }
-
 
     private void UpdateIngredientUI(RecipeData recipe)
     {
@@ -418,6 +423,7 @@ public class CookingUIController : MonoBehaviour
             }
         }
     }
+
     public void ShowItemReceivedPopup(RecipeData recipe)
     {
         itemReceivedPopup.SetActive(true);
@@ -449,6 +455,7 @@ public class CookingUIController : MonoBehaviour
         if (cookingManager != null && cookingManager.PotAnimationController != null)
             cookingManager.PotAnimationController.PlayAnimation("idle");
     }
+
     private void OnCookButton() { if (selectedRecipe != null) cookingManager.StartCooking(selectedRecipe); }
     private void OnPauseButton() { cookingManager.PauseCooking(); }
     private void OnResumeButton() { cookingManager.ResumeCooking(); }
