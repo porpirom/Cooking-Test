@@ -153,8 +153,6 @@ public class CookingManager : MonoBehaviour
 
         SaveCookingState();
     }
-
-
     private void FinishCookingImmediate()
     {
         if (!isCooking) return;
@@ -171,7 +169,15 @@ public class CookingManager : MonoBehaviour
         energySystem.SaveEnergy(Path.Combine(Application.persistentDataPath, "player_energy.json"));
 
         if (File.Exists(cookingStatePath)) File.Delete(cookingStatePath);
+
+        // --- เพิ่มส่วนนี้ --- 
+        CookingUIController uiController = FindObjectOfType<CookingUIController>();
+        if (uiController != null)
+        {
+            uiController.ShowItemReceivedPopup(currentRecipe);
+        }
     }
+
 
     public void PauseCooking()
     {

@@ -14,6 +14,100 @@
       "starRating": 1
     },
     {
+      "recipeName": "คัสตาร์ด",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "egg",
+          "amount": 1
+        }
+      ],
+      "resultId": "custard",
+      "cookingTimeSeconds": 8,
+      "starRating": 1
+    },
+    {
+      "recipeName": "คัสตาร์ด",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "egg",
+          "amount": 3
+        }
+      ],
+      "resultId": "custard",
+      "cookingTimeSeconds": 12,
+      "starRating": 1
+    },
+    {
+      "recipeName": "คัสตาร์ด",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "egg",
+          "amount": 1
+        },
+        {
+          "id": "vegetable",
+          "amount": 1
+        }
+      ],
+      "resultId": "custard",
+      "cookingTimeSeconds": 11,
+      "starRating": 2
+    },
+    {
+      "recipeName": "คัสตาร์ด",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "egg",
+          "amount": 2
+        },
+        {
+          "id": "carrot",
+          "amount": 1
+        }
+      ],
+      "resultId": "custard",
+      "cookingTimeSeconds": 12,
+      "starRating": 2
+    },
+    {
+      "recipeName": "คัสตาร์ด",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "egg",
+          "amount": 2
+        },
+        {
+          "id": "rice",
+          "amount": 1
+        }
+      ],
+      "resultId": "custard",
+      "cookingTimeSeconds": 14,
+      "starRating": 3
+    },
+    {
+      "recipeName": "คัสตาร์ด",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "egg",
+          "amount": 3
+        },
+        {
+          "id": "vegetable",
+          "amount": 1
+        }
+      ],
+      "resultId": "custard",
+      "cookingTimeSeconds": 13,
+      "starRating": 3
+    },
+    {
       "recipeName": "ซาลาเปา",
       "energyCost": 10,
       "ingredients": [
@@ -32,7 +126,121 @@
       ],
       "resultId": "stuffed_steamed_bun",
       "cookingTimeSeconds": 10,
+      "starRating": 1
+    },
+    {
+      "recipeName": "ซาลาเปา",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 2
+        },
+        {
+          "id": "rice",
+          "amount": 2
+        }
+      ],
+      "resultId": "stuffed_steamed_bun",
+      "cookingTimeSeconds": 12,
+      "starRating": 1
+    },
+    {
+      "recipeName": "ซาลาเปา",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 1
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        }
+      ],
+      "resultId": "stuffed_steamed_bun",
+      "cookingTimeSeconds": 14,
+      "starRating": 1
+    },
+    {
+      "recipeName": "ซาลาเปา",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 1
+        },
+        {
+          "id": "egg",
+          "amount": 1
+        },
+        {
+          "id": "rice",
+          "amount": 3
+        }
+      ],
+      "resultId": "stuffed_steamed_bun",
+      "cookingTimeSeconds": 13,
       "starRating": 2
+    },
+    {
+      "recipeName": "ซาลาเปา",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 2
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        }
+      ],
+      "resultId": "stuffed_steamed_bun",
+      "cookingTimeSeconds": 15,
+      "starRating": 2
+    },
+    {
+      "recipeName": "ซาลาเปา",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 2
+        },
+        {
+          "id": "egg",
+          "amount": 1
+        },
+        {
+          "id": "rice",
+          "amount": 1
+        }
+      ],
+      "resultId": "stuffed_steamed_bun",
+      "cookingTimeSeconds": 16,
+      "starRating": 3
+    },
+    {
+      "recipeName": "ซาลาเปา",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 3
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        },
+        {
+          "id": "rice",
+          "amount": 2
+        }
+      ],
+      "resultId": "stuffed_steamed_bun",
+      "cookingTimeSeconds": 18,
+      "starRating": 3
     },
     {
       "recipeName": "ปานิปูริ",
@@ -46,7 +254,6 @@
           "id": "egg",
           "amount": 2
         },
-
         {
           "id": "carrot",
           "amount": 4
@@ -58,6 +265,148 @@
       ],
       "resultId": "panipuri",
       "cookingTimeSeconds": 10,
+      "starRating": 1
+    },
+    {
+      "recipeName": "ปานิปูริ",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 3
+        },
+        {
+          "id": "egg",
+          "amount": 1
+        },
+        {
+          "id": "carrot",
+          "amount": 2
+        }
+      ],
+      "resultId": "panipuri",
+      "cookingTimeSeconds": 12,
+      "starRating": 1
+    },
+    {
+      "recipeName": "ปานิปูริ",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 1
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        },
+        {
+          "id": "carrot",
+          "amount": 3
+        },
+        {
+          "id": "rice",
+          "amount": 1
+        }
+      ],
+      "resultId": "panipuri",
+      "cookingTimeSeconds": 15,
+      "starRating": 1
+    },
+    {
+      "recipeName": "ปานิปูริ",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 2
+        },
+        {
+          "id": "egg",
+          "amount": 3
+        },
+        {
+          "id": "carrot",
+          "amount": 2
+        },
+        {
+          "id": "rice",
+          "amount": 2
+        }
+      ],
+      "resultId": "panipuri",
+      "cookingTimeSeconds": 14,
+      "starRating": 2
+    },
+    {
+      "recipeName": "ปานิปูริ",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 3
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        },
+        {
+          "id": "carrot",
+          "amount": 3
+        }
+      ],
+      "resultId": "panipuri",
+      "cookingTimeSeconds": 16,
+      "starRating": 2
+    },
+    {
+      "recipeName": "ปานิปูริ",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 4
+        },
+        {
+          "id": "egg",
+          "amount": 2
+        },
+        {
+          "id": "carrot",
+          "amount": 2
+        },
+        {
+          "id": "rice",
+          "amount": 1
+        }
+      ],
+      "resultId": "panipuri",
+      "cookingTimeSeconds": 18,
+      "starRating": 3
+    },
+    {
+      "recipeName": "ปานิปูริ",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 2
+        },
+        {
+          "id": "egg",
+          "amount": 3
+        },
+        {
+          "id": "carrot",
+          "amount": 3
+        },
+        {
+          "id": "rice",
+          "amount": 2
+        }
+      ],
+      "resultId": "panipuri",
+      "cookingTimeSeconds": 20,
       "starRating": 3
     },
     {
@@ -72,7 +421,6 @@
           "id": "egg",
           "amount": 2
         },
-
         {
           "id": "carrot",
           "amount": 1
@@ -84,7 +432,53 @@
       ],
       "resultId": "spicy_ramen",
       "cookingTimeSeconds": 60,
-      "starRating": 3
+      "starRating": 1
+    },
+    {
+      "recipeName": "สไปซี่ราเมง",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 3
+        },
+        {
+          "id": "egg",
+          "amount": 1
+        },
+        {
+          "id": "carrot",
+          "amount": 2
+        }
+      ],
+      "resultId": "spicy_ramen",
+      "cookingTimeSeconds": 55,
+      "starRating": 2
+    },
+    {
+      "recipeName": "สไปซี่ราเมง",
+      "energyCost": 10,
+      "ingredients": [
+        {
+          "id": "vegetable",
+          "amount": 1
+        },
+        {
+          "id": "egg",
+          "amount": 3
+        },
+        {
+          "id": "carrot",
+          "amount": 2
+        },
+        {
+          "id": "rice",
+          "amount": 1
+        }
+      ],
+      "resultId": "spicy_ramen",
+      "cookingTimeSeconds": 65,
+      "starRating": 2
     },
     {
       "recipeName": "สไปซี่ราเมง",
@@ -98,10 +492,9 @@
           "id": "egg",
           "amount": 2
         },
-
         {
           "id": "carrot",
-          "amount": 1
+          "amount": 2
         },
         {
           "id": "rice",
@@ -109,7 +502,7 @@
         }
       ],
       "resultId": "spicy_ramen",
-      "cookingTimeSeconds": 60,
+      "cookingTimeSeconds": 70,
       "starRating": 3
     },
     {
@@ -118,16 +511,15 @@
       "ingredients": [
         {
           "id": "vegetable",
-          "amount": 2
+          "amount": 3
         },
         {
           "id": "egg",
-          "amount": 2
+          "amount": 3
         },
-
         {
           "id": "carrot",
-          "amount": 1
+          "amount": 2
         },
         {
           "id": "rice",
@@ -135,85 +527,7 @@
         }
       ],
       "resultId": "spicy_ramen",
-      "cookingTimeSeconds": 60,
-      "starRating": 3
-    },
-    {
-      "recipeName": "สไปซี่ราเมง",
-      "energyCost": 10,
-      "ingredients": [
-        {
-          "id": "vegetable",
-          "amount": 2
-        },
-        {
-          "id": "egg",
-          "amount": 2
-        },
-
-        {
-          "id": "carrot",
-          "amount": 1
-        },
-        {
-          "id": "rice",
-          "amount": 2
-        }
-      ],
-      "resultId": "spicy_ramen",
-      "cookingTimeSeconds": 60,
-      "starRating": 3
-    },
-    {
-      "recipeName": "สไปซี่ราเมง",
-      "energyCost": 10,
-      "ingredients": [
-        {
-          "id": "vegetable",
-          "amount": 2
-        },
-        {
-          "id": "egg",
-          "amount": 2
-        },
-
-        {
-          "id": "carrot",
-          "amount": 1
-        },
-        {
-          "id": "rice",
-          "amount": 2
-        }
-      ],
-      "resultId": "spicy_ramen",
-      "cookingTimeSeconds": 60,
-      "starRating": 3
-    },
-    {
-      "recipeName": "สไปซี่ราเมง",
-      "energyCost": 10,
-      "ingredients": [
-        {
-          "id": "vegetable",
-          "amount": 2
-        },
-        {
-          "id": "egg",
-          "amount": 2
-        },
-
-        {
-          "id": "carrot",
-          "amount": 1
-        },
-        {
-          "id": "rice",
-          "amount": 2
-        }
-      ],
-      "resultId": "spicy_ramen",
-      "cookingTimeSeconds": 60,
+      "cookingTimeSeconds": 80,
       "starRating": 3
     }
   ]

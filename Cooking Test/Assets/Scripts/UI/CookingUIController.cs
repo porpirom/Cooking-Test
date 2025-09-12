@@ -45,6 +45,11 @@ public class CookingUIController : MonoBehaviour
     [SerializeField] private Sprite indicatorNormalSprite;
     [SerializeField] private Sprite indicatorActiveSprite;
 
+    [Header("Notification UI")]
+    [SerializeField] private GameObject itemReceivedPopup;   // หน้าต่างแจ้งเตือน
+    [SerializeField] private Transform itemDisplayContainer;  // ไว้วาง RecipeView/ItemView
+
+
     private List<GameObject> pageIndicators = new List<GameObject>();
 
     private List<GameObject> recipeButtons = new List<GameObject>();
@@ -408,6 +413,32 @@ public class CookingUIController : MonoBehaviour
                 Sprite icon = itemDatabase.GetIcon(ing.id);
                 view.SetData(ing.id, playerAmount, ing.amount, icon);
             }
+        }
+    }
+    public void ShowItemReceivedPopup(RecipeData recipe)
+    {
+        // เปิดหน้าต่าง
+        itemReceivedPopup.SetActive(true);
+
+        // ลบของเก่าออกก่อน
+        foreach (Transform child in itemDisplayContainer)
+            Destroy(child.gameObject);
+
+        // สร้าง RecipeView ใต้ container
+        GameObject obj = Instantiate(recipeButtonPrefab, itemDisplayContainer);
+        obj.transform.localScale = Vector3.one;
+
+        RecipeView view = obj.GetComponent<RecipeView>();
+        if (view != null)
+        {
+            Sprite icon = itemDatabase.GetIcon(recipe.resultId);
+            string displayName = itemDatabase.GetName(recipe.resultId);
+
+            view.SetData(recipe, icon, displayName);
+
+            // ปิดการกด
+            Button btn = view.GetComponent<Button>();
+            if (btn != null) btn.interactable = false;
         }
     }
 
