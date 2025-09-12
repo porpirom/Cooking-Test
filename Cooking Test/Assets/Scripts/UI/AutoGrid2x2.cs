@@ -4,33 +4,40 @@ using UnityEngine.UI;
 [RequireComponent(typeof(GridLayoutGroup))]
 public class AutoGrid2x2 : MonoBehaviour
 {
+    #region Fields
     private GridLayoutGroup grid;
+    private RectTransform rectTransform;
+    #endregion
 
-    void Awake()
+    #region Unity Methods
+    private void Awake()
     {
+        // Cache components
         grid = GetComponent<GridLayoutGroup>();
-        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        grid.constraintCount = 2; // 2 columns
-        UpdateCellSize(); // เซ็ตครั้งแรก
-    }
+        rectTransform = transform as RectTransform;
 
-    void OnRectTransformDimensionsChange()
-    {
-        // แค่ guard ขนาด <= 0
-        RectTransform rt = (RectTransform)transform;
-        if (rt == null || rt.rect.width <= 0 || rt.rect.height <= 0) return;
+        // Force grid into 2-column layout
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = 2;
 
         UpdateCellSize();
     }
 
+    private void OnRectTransformDimensionsChange()
+    {
+        // Update cell size automatically when parent rect changes
+        if (!IsValidRect()) return;
+        UpdateCellSize();
+    }
+    #endregion
+
+    #region Private Methods
     private void UpdateCellSize()
     {
-        if (grid == null) return;
-        RectTransform rt = (RectTransform)transform;
-        if (rt == null) return;
+        if (grid == null || rectTransform == null) return;
 
-        float totalWidth = rt.rect.width - grid.padding.left - grid.padding.right;
-        float totalHeight = rt.rect.height - grid.padding.top - grid.padding.bottom;
+        float totalWidth = rectTransform.rect.width - grid.padding.left - grid.padding.right;
+        float totalHeight = rectTransform.rect.height - grid.padding.top - grid.padding.bottom;
 
         if (totalWidth <= 0 || totalHeight <= 0) return;
 
@@ -39,4 +46,12 @@ public class AutoGrid2x2 : MonoBehaviour
 
         grid.cellSize = new Vector2(cellWidth, cellHeight);
     }
+
+    private bool IsValidRect()
+    {
+        return rectTransform != null &&
+               rectTransform.rect.width > 0 &&
+               rectTransform.rect.height > 0;
+    }
+    #endregion
 }

@@ -3,6 +3,7 @@ using System;
 
 public class TimeManager : MonoBehaviour
 {
+    #region Singleton
     public static TimeManager Instance { get; private set; }
 
     private void Awake()
@@ -12,16 +13,28 @@ public class TimeManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
+    #endregion
 
-    /// เวลาปัจจุบัน UTC
+    #region Properties
+    /// <summary>
+    /// Current UTC time.
+    /// </summary>
     public DateTime UtcNow => DateTime.UtcNow;
 
-    /// แปลงเป็น Unix
+    /// <summary>
+    /// Current UTC time as Unix timestamp (seconds since 1970-01-01).
+    /// </summary>
     public long NowUnix => new DateTimeOffset(UtcNow).ToUnixTimeSeconds();
+    #endregion
 
+    #region Public Methods
+    /// <summary>
+    /// Converts a DateTime to Unix timestamp.
+    /// </summary>
     public long ToUnix(DateTime dt)
     {
         if (dt == DateTime.MinValue)
@@ -33,5 +46,9 @@ public class TimeManager : MonoBehaviour
         return new DateTimeOffset(dt).ToUnixTimeSeconds();
     }
 
+    /// <summary>
+    /// Converts a Unix timestamp to UTC DateTime.
+    /// </summary>
     public DateTime FromUnix(long unix) => DateTimeOffset.FromUnixTimeSeconds(unix).UtcDateTime;
+    #endregion
 }

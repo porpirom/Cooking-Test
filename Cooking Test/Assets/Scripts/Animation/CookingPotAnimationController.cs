@@ -5,16 +5,16 @@ using UnityEngine;
 
 public class CookingPotAnimationController : MonoBehaviour
 {
-    public SkeletonGraphic skeletonGraphic;
-    private string[] cookingIdleSequence = { "idle-boiled", "idle2" };
+    #region Inspector References
+    [SerializeField] private SkeletonGraphic skeletonGraphic;
+    #endregion
+
+    #region Private Fields
+    private readonly string[] cookingIdleSequence = { "idle-boiled", "idle2" };
     private int cookingIdleIndex = 0;
     private bool isCookingIdlePlaying = false;
-    public bool SetIsCookingIdlePlaying
-    {
-        set { isCookingIdlePlaying = value; }
-    }
-    // กำหนด animation names + loop flag
-    private Dictionary<string, bool> animationLoopMap = new Dictionary<string, bool>()
+
+    private readonly Dictionary<string, bool> animationLoopMap = new Dictionary<string, bool>()
     {
         {"All Success - Example", false},
         {"All UnSuccess - Example", false},
@@ -23,47 +23,41 @@ public class CookingPotAnimationController : MonoBehaviour
         {"idle2", true},
         {"success", false},
         {"success-idle", true},
-        {"susccess-close",false },
+        {"susccess-close", false},
         {"unsuccess", false},
         {"unsuccess-idle", true},
-        {"unsuccess-close",false }
+        {"unsuccess-close", false}
     };
+    #endregion
 
-    void Start()
+    #region Properties
+    public bool SetIsCookingIdlePlaying
     {
-        // เล่น animation เริ่มต้น
-        PlayAnimation("idle");
+        set { isCookingIdlePlaying = value; }
     }
+    #endregion
+
+    #region Unity Methods
+    private void Start()
+    {
+        PlayAnimation("idle"); // Play default idle animation
+    }
+    #endregion
+
+    #region Public Methods
+    /// <summary>
+    /// Starts alternating cooking idle animations.
+    /// </summary>
     public void PlayCookingIdle()
     {
-        if (isCookingIdlePlaying) return; // ป้องกันเรียกซ้ำ
+        if (isCookingIdlePlaying) return; // Prevent multiple calls
         isCookingIdlePlaying = true;
         PlayNextCookingIdle();
     }
 
-    private void PlayNextCookingIdle()
-    {
-        string nextAnim = cookingIdleSequence[cookingIdleIndex];
-        cookingIdleIndex = (cookingIdleIndex + 1) % cookingIdleSequence.Length;
-
-        var entry = skeletonGraphic.AnimationState.SetAnimation(0, nextAnim, false);
-        entry.Complete += e =>
-        {
-            // เช็คก่อนว่ากำลัง cooking อยู่
-            if (CookingManagerExistsAndCooking())
-                PlayNextCookingIdle();
-            else
-                isCookingIdlePlaying = false;
-        };
-    }
-
-    // helper function ตรวจสอบสถานะ cooking
-    private bool CookingManagerExistsAndCooking()
-    {
-        var manager = FindObjectOfType<CookingManager>();
-        return manager != null && manager.isCooking && !manager.isPaused;
-    }
-
+    /// <summary>
+    /// Plays an animation by name if it exists in the loop map.
+    /// </summary>
     public void PlayAnimation(string animName)
     {
         if (!animationLoopMap.ContainsKey(animName))
@@ -76,28 +70,65 @@ public class CookingPotAnimationController : MonoBehaviour
         skeletonGraphic.AnimationState.SetAnimation(0, animName, loop);
     }
 
-    // เล่น overlay animation (track 1)
+    /// <summary>
+    /// Plays overlay animation on track 1.
+    /// </summary>
     public void PlayOverlayAnimation(string animName, bool loop)
     {
         skeletonGraphic.AnimationState.SetAnimation(1, animName, loop);
     }
 
-    // เล่น animation แล้วกลับ idle (optional)
+    /// <summary>
+    /// Plays an animation once and then returns to idle.
+    /// </summary>
     public void PlayOnceThenIdle(string animName)
     {
         if (!animationLoopMap.ContainsKey(animName))
             return;
 
         skeletonGraphic.AnimationState.SetAnimation(0, animName, false);
-        skeletonGraphic.AnimationState.AddAnimation(0, "Idle", true, 0f);
+        skeletonGraphic.AnimationState.AddAnimation(0, "idle", true, 0f);
     }
+
+    /// <summary>
+    /// Plays the success animation sequence.
+    /// </summary>
     public void PlaySuccessSequence()
     {
         skeletonGraphic.AnimationState.SetAnimation(0, "success", false)
             .Complete += entry =>
             {
-                skeletonGraphic.AnimationState.SetAnimation(0, "success-idle", true); // loop idle หลัง success
+                skeletonGraphic.AnimationState.SetAnimation(0, "success-idle", true);
             };
     }
+    #endregion
 
+    #region Private Methods
+    /// <summary>
+    /// Plays the next idle animation in the sequence for cooking.
+    /// </summary>
+    private void PlayNextCookingIdle()
+    {
+        string nextAnim = cookingIdleSequence[cookingIdleIndex];
+        cookingIdleIndex = (cookingIdleIndex + 1) % cookingIdleSequence.Length;
+
+        var entry = skeletonGraphic.AnimationState.SetAnimation(0, nextAnim, false);
+        entry.Complete += e =>
+        {
+            if (CookingManagerExistsAndCooking())
+                PlayNextCookingIdle();
+            else
+                isCookingIdlePlaying = false;
+        };
+    }
+
+    /// <summary>
+    /// Checks if a CookingManager exists and cooking is in progress.
+    /// </summary>
+    private bool CookingManagerExistsAndCooking()
+    {
+        var manager = FindObjectOfType<CookingManager>();
+        return manager != null && manager.IsCooking;
+    }
+    #endregion
 }

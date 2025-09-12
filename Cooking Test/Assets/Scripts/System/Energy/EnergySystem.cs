@@ -2,23 +2,36 @@
 using System;
 using System.IO;
 
+/// <summary>
+/// Manages player energy, automatic regeneration over time, and persistence.
+/// </summary>
 public class EnergySystem : MonoBehaviour
 {
+    #region Inspector Settings
     [Header("Energy Settings")]
     [SerializeField] private int maxEnergy = 30;
-    [SerializeField] private float regenInterval = 5f; // วินาทีต่อ 1 energy
+    [SerializeField] private float regenInterval = 5f; // Seconds per 1 energy
+    #endregion
 
+    #region Private Fields
     private int currentEnergy;
     private string energyPath;
     private long lastUpdateUnix;
+    #endregion
 
+    #region Events
+    /// <summary>Invoked when energy changes, passing current and max values.</summary>
     public event Action<int, int> OnEnergyChanged;
+    #endregion
 
+    #region Properties
     public int CurrentEnergy => currentEnergy;
     public int MaxEnergy => maxEnergy;
     public bool IsFull => currentEnergy >= maxEnergy;
     public bool IsEmpty => currentEnergy <= 0;
+    #endregion
 
+    #region Unity Methods
     private void Awake()
     {
         energyPath = Path.Combine(Application.persistentDataPath, "player_energy.json");
@@ -49,7 +62,9 @@ public class EnergySystem : MonoBehaviour
             RecalculateEnergy();
         }
     }
+    #endregion
 
+    #region Energy Calculation
     private void RecalculateEnergy()
     {
         DateTime now = TimeManager.Instance.UtcNow;
@@ -68,10 +83,13 @@ public class EnergySystem : MonoBehaviour
                 OnEnergyChanged?.Invoke(currentEnergy, maxEnergy);
                 SaveEnergy(energyPath);
 
+                Debug.Log($"[Energy] Recovered {currentEnergy - oldEnergy} energy ({oldEnergy} → {currentEnergy})");
             }
         }
     }
+    #endregion
 
+    #region Public API
     public bool HasEnergy(int amount) => currentEnergy >= amount;
 
     public bool UseEnergy(int amount)
@@ -80,7 +98,7 @@ public class EnergySystem : MonoBehaviour
 
         if (!HasEnergy(amount))
         {
-            Debug.LogWarning("[Energy] Not enough!");
+            Debug.LogWarning("[Energy] Not enough energy!");
             return false;
         }
 
@@ -105,6 +123,7 @@ public class EnergySystem : MonoBehaviour
 
         Debug.Log($"[Energy] Added {amount} ({before} → {currentEnergy}/{maxEnergy})");
     }
+    #endregion
 
     #region Save/Load
     [Serializable]
@@ -121,8 +140,7 @@ public class EnergySystem : MonoBehaviour
             currentEnergy = currentEnergy,
             lastUpdateUnix = lastUpdateUnix
         };
-        string json = JsonUtility.ToJson(saveData, true);
-        File.WriteAllText(path, json);
+        File.WriteAllText(path, JsonUtility.ToJson(saveData, true));
     }
 
     public void LoadEnergy(string path)
