@@ -10,6 +10,8 @@ public class CookingStateData
     public long endTimeUnix;
     public bool isPaused;
     public long pauseStartUnix;
+    public float remainingTimeOnPause;
+    public float totalCookingDuration; // Added to cap the time
 }
 
 public class CookingManager : MonoBehaviour
@@ -20,17 +22,19 @@ public class CookingManager : MonoBehaviour
     [SerializeField] private int recipeIndex = 0;
 
     [Header("UI Sprites")]
-    [SerializeField] private Sprite[] starSprites;   // index 0 = ดาว 1 ดวง, index 1 = ดาว 2 ดวง...
-    [SerializeField] private Sprite[] frameSprites;  // index 0 = กรอบ 1 ดาว, index 1 = กรอบ 2 ดาว...
+    [SerializeField] private Sprite[] starSprites;
+    [SerializeField] private Sprite[] frameSprites;
 
     [SerializeField] CookingPotAnimationController cookingPotAnimationController;
-    // Make these variables public to be accessible by UIManager
     public bool isCooking = false;
     public bool isPaused = false;
     private RecipeData currentRecipe;
     private DateTime endTime;
     private DateTime pauseStartTime;
     private string cookingStatePath;
+
+    private float remainingTimeOnPause = 0f;
+    private float totalCookingDuration; // Stores total recipe time
 
     private string pendingRecipeName = null;
 
@@ -49,7 +53,7 @@ public class CookingManager : MonoBehaviour
         {
             if (!isCooking) return 0;
             DateTime now = TimeManager.Instance.UtcNow;
-            if (isPaused) return Mathf.Max(0, Mathf.CeilToInt((float)(endTime - pauseStartTime).TotalSeconds));
+            if (isPaused) return Mathf.CeilToInt(remainingTimeOnPause);
             return Mathf.Max(0, Mathf.CeilToInt((float)(endTime - now).TotalSeconds));
         }
     }
@@ -57,10 +61,9 @@ public class CookingManager : MonoBehaviour
     private void Awake()
     {
         cookingStatePath = Path.Combine(Application.persistentDataPath, "player_cooking.json");
-        Debug.Log($"[CookingManager] Save path: {cookingStatePath}");
-
-        // Load state in Awake to ensure it's available before Start
+        Debug.Log($"[CookingManager-Awake] Save path: {cookingStatePath}");
         LoadCookingState();
+        Debug.Log($"[CookingManager-Awake] State Loaded: isCooking={isCooking}, isPaused={isPaused}, remainingTimeOnPause={remainingTimeOnPause}");
     }
 
     private void Start()
@@ -76,9 +79,10 @@ public class CookingManager : MonoBehaviour
                 if (currentRecipe != null)
                 {
                     int remaining = RemainingTime;
+                    Debug.Log($"[CookingManager-Start] Recipe loaded. Remaining time: {remaining}");
                     if (remaining <= 0 && !isPaused)
                     {
-                        FinishCookingImmediate(); // ถ้าหมดเวลาแล้วก็เสร็จอาหารทันที
+                        FinishCookingImmediate();
                     }
                     else
                     {
@@ -97,18 +101,44 @@ public class CookingManager : MonoBehaviour
     {
         if (!isCooking || isPaused) return;
 
-        int remaining = RemainingTime;
-        // The event is now called every frame to ensure a smooth countdown
-        OnCookingTimeChanged?.Invoke(remaining);
+        TimeSpan remainingTime = endTime - TimeManager.Instance.UtcNow;
+        int remaining = Mathf.Max(0, Mathf.CeilToInt((float)remainingTime.TotalSeconds));
 
         if (remaining <= 0)
         {
             FinishCookingImmediate();
         }
+        else
+        {
+            OnCookingTimeChanged?.Invoke(remaining);
+        }
     }
+
     private void OnDestroy()
     {
-        if (isCooking) SaveCookingState();
+        if (isCooking)
+        {
+            Debug.Log("[CookingManager-OnDestroy] Saving state...");
+            SaveCookingState();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (isCooking)
+        {
+            Debug.Log("[CookingManager-OnDisable] Saving state...");
+            SaveCookingState();
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        if (isCooking)
+        {
+            Debug.Log("[CookingManager-OnApplicationQuit] Saving state...");
+            SaveCookingState();
+        }
     }
 
     public void CookSelectedRecipe()
@@ -124,26 +154,23 @@ public class CookingManager : MonoBehaviour
 
     public void StartCooking(RecipeData recipe)
     {
-        Debug.Log($"[CookingManager] StartCooking called for {recipe.recipeName}");
+        Debug.Log($"[CookingManager-StartCooking] Starting cooking for {recipe.recipeName}");
 
-        // เช็คพลังงานก่อน
         if (!energySystem.HasEnergy(recipe.energyCost))
         {
-            Debug.Log("[CookingManager] Not enough energy");
-            return; // ออกจากฟังก์ชันทันที
+            Debug.Log("[CookingManager-StartCooking] Not enough energy. Cooking cancelled.");
+            return;
         }
 
-        // เช็ควัตถุดิบทั้งหมด
         foreach (var ing in recipe.ingredients)
         {
             if (!inventory.HasItem(ing.id, ing.amount))
             {
-                Debug.Log($"[CookingManager] Missing ingredient {ing.id}");
-                return; // ออกจากฟังก์ชันทันที
+                Debug.Log($"[CookingManager-StartCooking] Missing ingredient {ing.id}. Cooking cancelled.");
+                return;
             }
         }
 
-        // ผ่านทุกเงื่อนไขแล้วค่อยหักพลังงานและวัตถุดิบ
         UpdateCookingAnimation();
         energySystem.UseEnergy(recipe.energyCost);
         foreach (var ing in recipe.ingredients)
@@ -152,13 +179,16 @@ public class CookingManager : MonoBehaviour
         inventory.SaveToJson(Path.Combine(Application.persistentDataPath, "player_inventory.json"));
         energySystem.SaveEnergy(Path.Combine(Application.persistentDataPath, "player_energy.json"));
 
-        // เริ่มนับเวลา
         endTime = TimeManager.Instance.UtcNow.AddSeconds(recipe.cookingTimeSeconds);
-        isCooking = true;   // ตั้งค่านี้ก่อน
+        isCooking = true;
         isPaused = false;
         currentRecipe = recipe;
 
-        // --- เรียก animation หลังตั้ง isCooking ---
+        remainingTimeOnPause = 0f;
+        totalCookingDuration = recipe.cookingTimeSeconds; // Save total duration
+
+        Debug.Log($"[CookingManager-StartCooking] New cooking session started. Initial endTime: {endTime.ToLocalTime()}");
+
         cookingPotAnimationController.PlayCookingIdle();
 
         OnCookingStateChanged?.Invoke(true);
@@ -166,9 +196,11 @@ public class CookingManager : MonoBehaviour
 
         SaveCookingState();
     }
+
     private void FinishCookingImmediate()
     {
         if (!isCooking) return;
+        Debug.Log($"[CookingManager-FinishCookingImmediate] Cooking finished for {currentRecipe.recipeName}");
 
         inventory.AddItem(currentRecipe.resultId, 1);
         isCooking = false;
@@ -184,7 +216,6 @@ public class CookingManager : MonoBehaviour
 
         if (File.Exists(cookingStatePath)) File.Delete(cookingStatePath);
 
-        // --- เพิ่มส่วนนี้ --- 
         CookingUIController uiController = FindObjectOfType<CookingUIController>();
         if (uiController != null)
         {
@@ -192,37 +223,61 @@ public class CookingManager : MonoBehaviour
         }
     }
 
-
     public void PauseCooking()
     {
         if (!isCooking || isPaused) return;
-        pauseStartTime = TimeManager.Instance.UtcNow;
+
+        remainingTimeOnPause = RemainingTime;
         isPaused = true;
+        pauseStartTime = TimeManager.Instance.UtcNow;
+
+        Debug.Log($"[CookingManager-PauseCooking] Paused! Remaining time stored: {remainingTimeOnPause} seconds.");
+
         SaveCookingState();
         OnCookingStateChanged?.Invoke(isCooking);
+
+        OnCookingTimeChanged?.Invoke(Mathf.CeilToInt(remainingTimeOnPause));
     }
+
     public void ResumeCooking()
     {
         if (!isCooking || !isPaused) return;
+
         UpdateCookingAnimation();
+
+        // คำนวณเวลาที่หยุดไป
         TimeSpan pausedDuration = TimeManager.Instance.UtcNow - pauseStartTime;
-        endTime = endTime.Add(pausedDuration);
+
+        // คำนวณเวลาที่เหลือทั้งหมดหลัง Resume
+        float newRemainingTime = remainingTimeOnPause + (float)pausedDuration.TotalSeconds;
+
+        // ตรวจสอบว่าเวลาที่เหลือใหม่ไม่เกินระยะเวลาทำอาหารทั้งหมด
+        if (newRemainingTime > totalCookingDuration)
+        {
+            newRemainingTime = totalCookingDuration;
+        }
+
+        // ตั้งค่าเวลาสิ้นสุดใหม่ตาม Logic ที่ถูกต้องของคุณ
+        endTime = TimeManager.Instance.UtcNow.AddSeconds(newRemainingTime);
+
         isPaused = false;
-        SaveCookingState();
-        OnCookingStateChanged?.Invoke(true);
-        OnCookingTimeChanged?.Invoke(RemainingTime);
+        remainingTimeOnPause = 0f;
+
+        Debug.Log($"[CookingManager-ResumeCooking] Resumed! New endTime is: {endTime.ToLocalTime()}");
+
+        int remaining = RemainingTime;
+        if (remaining <= 0)
+        {
+            FinishCookingImmediate();
+        }
+        else
+        {
+            SaveCookingState();
+            OnCookingStateChanged?.Invoke(true);
+            OnCookingTimeChanged?.Invoke(RemainingTime);
+        }
     }
 
-
-    private void OnDisable()
-    {
-        if (isCooking) SaveCookingState();
-    }
-
-    private void OnApplicationQuit()
-    {
-        if (isCooking) SaveCookingState();
-    }
 
     private void SaveCookingState()
     {
@@ -234,29 +289,45 @@ public class CookingManager : MonoBehaviour
             recipeName = currentRecipe.recipeName,
             endTimeUnix = TimeManager.Instance.ToUnix(endTime),
             isPaused = isPaused,
-            pauseStartUnix = TimeManager.Instance.ToUnix(pauseStartTime)
+            pauseStartUnix = TimeManager.Instance.ToUnix(pauseStartTime),
+            remainingTimeOnPause = this.remainingTimeOnPause,
+            totalCookingDuration = this.totalCookingDuration
         };
 
         File.WriteAllText(cookingStatePath, JsonUtility.ToJson(state, true));
+        Debug.Log($"[CookingManager-SaveState] State saved. isPaused={isPaused}, remainingTimeOnPause={remainingTimeOnPause}");
     }
+
     private void LoadCookingState()
     {
-        if (!File.Exists(cookingStatePath)) return;
+        if (!File.Exists(cookingStatePath))
+        {
+            Debug.Log("[CookingManager-LoadState] No cooking state file found.");
+            return;
+        }
 
         string json = File.ReadAllText(cookingStatePath);
         CookingStateData state = JsonUtility.FromJson<CookingStateData>(json);
-        if (!state.isCooking) return;
+
+        if (!state.isCooking)
+        {
+            Debug.Log("[CookingManager-LoadState] State found but not cooking.");
+            return;
+        }
 
         pendingRecipeName = state.recipeName;
         isPaused = state.isPaused;
         endTime = TimeManager.Instance.FromUnix(state.endTimeUnix);
         pauseStartTime = TimeManager.Instance.FromUnix(state.pauseStartUnix);
+        remainingTimeOnPause = state.remainingTimeOnPause;
+        totalCookingDuration = state.totalCookingDuration;
 
-        // 👇 เพิ่มตรงนี้
-        int remaining = Mathf.Max(0, Mathf.CeilToInt((float)(endTime - TimeManager.Instance.UtcNow).TotalSeconds));
+        Debug.Log($"[CookingManager-LoadState] State loaded. isPaused={isPaused}, remainingTimeOnPause={remainingTimeOnPause}");
+
+        int remaining = RemainingTime;
         if (remaining <= 0 && !isPaused)
         {
-            // ถ้าเวลาหมดไปแล้วในตอนที่เกมปิด
+            Debug.Log("[CookingManager-LoadState] Time has already run out. Finishing immediately.");
             isCooking = false;
             isPaused = false;
             currentRecipe = null;
@@ -268,12 +339,11 @@ public class CookingManager : MonoBehaviour
         if (!isCooking)
         {
             cookingPotAnimationController.PlayAnimation("idle");
-            cookingPotAnimationController.SetIsCookingIdlePlaying = false; // reset flag
+            cookingPotAnimationController.SetIsCookingIdlePlaying = false;
         }
         else
         {
-            cookingPotAnimationController.PlayCookingIdle(); // เรียกครั้งเดียว
+            cookingPotAnimationController.PlayCookingIdle();
         }
     }
-
 }

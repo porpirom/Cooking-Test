@@ -68,7 +68,6 @@ public class EnergySystem : MonoBehaviour
                 OnEnergyChanged?.Invoke(currentEnergy, maxEnergy);
                 SaveEnergy(energyPath);
 
-                Debug.Log($"[Energy] Regenerated {currentEnergy - oldEnergy}, now {currentEnergy}/{maxEnergy}");
             }
         }
     }
