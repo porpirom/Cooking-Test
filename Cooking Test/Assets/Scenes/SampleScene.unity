@@ -813,6 +813,7 @@ GameObject:
   m_Component:
   - component: {fileID: 242949121}
   - component: {fileID: 242949120}
+  - component: {fileID: 242949122}
   m_Layer: 0
   m_Name: Inventory
   m_TagString: Untagged
@@ -847,6 +848,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &242949122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 242949118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd6e541ca9c8908418ea18939733c9a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  inventory: {fileID: 242949120}
 --- !u!1 &262427183
 GameObject:
   m_ObjectHideFlags: 0
@@ -3493,7 +3507,7 @@ MonoBehaviour:
   m_Placeholder: {fileID: 0}
   m_ItemText: {fileID: 710884152}
   m_ItemImage: {fileID: 241903412}
-  m_Value: 0
+  m_Value: -1
   m_Options:
     m_Options: []
   m_OnValueChanged:

@@ -73,19 +73,22 @@ public class CookingManager : MonoBehaviour
                 currentRecipe = Array.Find(recipeLoader.recipeCollection.recipes, r => r.recipeName == pendingRecipeName);
                 if (currentRecipe != null)
                 {
-                    Debug.Log($"[CookingManager] Resuming cooking: {pendingRecipeName}, remaining={RemainingTime}");
-                    isCooking = true;
-                    // Adjust time to account for the duration the game was closed
-                    if (!isPaused)
+                    int remaining = RemainingTime;
+                    if (remaining <= 0 && !isPaused)
                     {
-                        ResumeCooking();
+                        FinishCookingImmediate(); // ถ้าหมดเวลาแล้วก็เสร็จอาหารทันที
                     }
-                    OnCookingStateChanged?.Invoke(true);
-                    OnCookingTimeChanged?.Invoke(RemainingTime);
+                    else
+                    {
+                        isCooking = true;
+                        OnCookingStateChanged?.Invoke(true);
+                        OnCookingTimeChanged?.Invoke(remaining);
+                    }
                 }
                 pendingRecipeName = null;
             }
         };
+
     }
 
     private void Update()
@@ -100,6 +103,10 @@ public class CookingManager : MonoBehaviour
         {
             FinishCookingImmediate();
         }
+    }
+    private void OnDestroy()
+    {
+        if (isCooking) SaveCookingState();
     }
 
     public void CookSelectedRecipe()
@@ -187,16 +194,18 @@ public class CookingManager : MonoBehaviour
         SaveCookingState();
         OnCookingStateChanged?.Invoke(isCooking);
     }
-
     public void ResumeCooking()
     {
         if (!isCooking || !isPaused) return;
+
         TimeSpan pausedDuration = TimeManager.Instance.UtcNow - pauseStartTime;
         endTime = endTime.Add(pausedDuration);
         isPaused = false;
         SaveCookingState();
-        OnCookingStateChanged?.Invoke(isCooking);
+        OnCookingStateChanged?.Invoke(true);
+        OnCookingTimeChanged?.Invoke(RemainingTime);
     }
+
 
     private void OnDisable()
     {
@@ -223,7 +232,6 @@ public class CookingManager : MonoBehaviour
 
         File.WriteAllText(cookingStatePath, JsonUtility.ToJson(state, true));
     }
-
     private void LoadCookingState()
     {
         if (!File.Exists(cookingStatePath)) return;
@@ -236,6 +244,17 @@ public class CookingManager : MonoBehaviour
         isPaused = state.isPaused;
         endTime = TimeManager.Instance.FromUnix(state.endTimeUnix);
         pauseStartTime = TimeManager.Instance.FromUnix(state.pauseStartUnix);
+
+        // 👇 เพิ่มตรงนี้
+        int remaining = Mathf.Max(0, Mathf.CeilToInt((float)(endTime - TimeManager.Instance.UtcNow).TotalSeconds));
+        if (remaining <= 0 && !isPaused)
+        {
+            // ถ้าเวลาหมดไปแล้วในตอนที่เกมปิด
+            isCooking = false;
+            isPaused = false;
+            currentRecipe = null;
+            if (File.Exists(cookingStatePath)) File.Delete(cookingStatePath);
+        }
     }
 
 }

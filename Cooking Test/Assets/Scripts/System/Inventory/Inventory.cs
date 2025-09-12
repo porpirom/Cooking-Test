@@ -22,7 +22,7 @@ public class Inventory : MonoBehaviour
     {
         if (!items.ContainsKey(id)) items[id] = 0;
         items[id] += amount;
-        SaveToJson(Path.Combine(Application.streamingAssetsPath, "player_inventory.json"));
+        SaveToJson(Path.Combine(Application.persistentDataPath, "player_inventory.json"));
 
         OnInventoryChanged?.Invoke(); // á¨é§ Event
     }
@@ -34,7 +34,7 @@ public class Inventory : MonoBehaviour
         items[id] -= amount;
         if (items[id] <= 0) items.Remove(id);
 
-        SaveToJson(Path.Combine(Application.streamingAssetsPath, "player_inventory.json"));
+        SaveToJson(Path.Combine(Application.persistentDataPath, "player_inventory.json"));
         OnInventoryChanged?.Invoke(); // á¨é§ Event
         return true;
     }
