@@ -19,6 +19,10 @@ public class CookingManager : MonoBehaviour
     [SerializeField] private RecipeLoader recipeLoader;
     [SerializeField] private int recipeIndex = 0;
 
+    [Header("UI Sprites")]
+    [SerializeField] private Sprite[] starSprites;   // index 0 = ดาว 1 ดวง, index 1 = ดาว 2 ดวง...
+    [SerializeField] private Sprite[] frameSprites;  // index 0 = กรอบ 1 ดาว, index 1 = กรอบ 2 ดาว...
+
     // Make these variables public to be accessible by UIManager
     public bool isCooking = false;
     public bool isPaused = false;

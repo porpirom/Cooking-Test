@@ -1946,6 +1946,8 @@ MonoBehaviour:
   cookButton: {fileID: 1189492918}
   pauseButton: {fileID: 14635488}
   resumeButton: {fileID: 59114050}
+  cookButtonEnabledSprite: {fileID: 21300000, guid: 653237ac6d6544743b6ef8572200f93e, type: 3}
+  cookButtonDisabledSprite: {fileID: 21300000, guid: daf19f16a778ea042b97bedb0d1f4783, type: 3}
   starDropdown: {fileID: 1364362757}
   searchInput: {fileID: 2118344918}
   nextPageButton: {fileID: 1105651981}
@@ -2851,7 +2853,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -4754,10 +4756,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
+  m_fontSize: 49.6
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -5052,6 +5054,8 @@ MonoBehaviour:
   inventory: {fileID: 242949120}
   recipeLoader: {fileID: 908004969}
   recipeIndex: 0
+  starSprites: []
+  frameSprites: []
   isCooking: 0
   isPaused: 0
 --- !u!4 &2084951625
