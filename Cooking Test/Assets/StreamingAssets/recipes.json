@@ -90,7 +90,7 @@
       "ingredients": [
         {
           "id": "egg",
-          "amount": 2
+          "amount": 999
         }
       ],
       "resultId": "custard",

@@ -303,7 +303,17 @@ public class CookingUIController : MonoBehaviour
     {
         selectedRecipe = recipe;
         UpdateIngredientUI(recipe);
-        UpdateCookButtonState();
+
+        // Always update cook button state based on cooking status
+        if (cookingManager != null && cookingManager.IsCooking)
+        {
+            cookButton.interactable = false;
+            cookButton.GetComponent<Image>().sprite = cookButtonDisabledSprite;
+        }
+        else
+        {
+            UpdateCookButtonState();
+        }
 
         foreach (var obj in allRecipeButtons)
         {

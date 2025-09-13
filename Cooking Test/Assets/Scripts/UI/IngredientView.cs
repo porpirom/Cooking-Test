@@ -16,7 +16,7 @@ public class IngredientView : MonoBehaviour
     public void SetData(string id, int playerAmount, int requiredAmount, Sprite icon)
     {
         // Color player's amount red if not enough, white otherwise
-        string playerColor = playerAmount < requiredAmount ? "red" : "white";
+        string playerColor = playerAmount <= 0 ? "red" : "white";
         amountText.text = $"<color={playerColor}>{playerAmount}</color>/{requiredAmount}";
 
         if (icon != null)
